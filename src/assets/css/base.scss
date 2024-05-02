@@ -1,0 +1,98 @@
+// COLOR VARIABLES
+$text-color: #7b809a;
+$white-color: #ffffff;
+$black-color: #000000;
+$primary-color: #247cd4;
+$error-color: #e91e63;
+$success-color: #4caf50;
+$warning-color: #fb8c00;
+$red-color: #d70200;
+$light-color: #f0f2f5;
+$dark-color: #344767;
+
+$white-hover-color: #ebe8e8;
+$black-hover-color: #535252;
+$primary-hover-color: #3776c7;
+$error-hover-color: #dd4376;
+$success-hover-color: #58b15d;
+$warning-hover-color: #db9744;
+$red-hover-color: #ce2927;
+$light-hover-color: #d5d6d6;
+$dark-hover-color: #505e77;
+
+.text-color {
+  color: $text-color;
+}
+
+.white-color {
+  color: $white-color;
+}
+
+.black-color {
+  color: $black-color;
+}
+
+.red-color {
+  color: $red-color;
+}
+
+.primary-color {
+  color: $primary-color;
+}
+
+.success-color {
+  color: $success-color;
+}
+
+.warning-color {
+  color: $warning-color;
+}
+
+.error-color {
+  color: $error-color;
+}
+
+.light-color {
+  color: $light-color;
+}
+
+.dark-color {
+  color: $dark-color;
+}
+
+// Background-color
+.bg-white-color {
+  background-color: $white-color;
+}
+
+.bg-black-color {
+  background-color: $black-color;
+}
+
+.bg-red-color {
+  background-color: $red-color;
+}
+
+.bg-primary-color {
+  background-color: $primary-color;
+}
+
+.bg-success-color {
+  background-color: $success-color;
+}
+
+.bg-warning-color {
+  background-color: $warning-color;
+}
+
+.bg-error-color {
+  background-color: $error-color;
+}
+
+.bg-light-color {
+  background-color: $light-color;
+}
+
+.bg-dark-color {
+  background-color: $dark-color;
+}
