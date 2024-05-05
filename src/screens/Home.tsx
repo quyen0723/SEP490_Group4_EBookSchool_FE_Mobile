@@ -10,123 +10,139 @@ import {
   SafeAreaView,
   Alert,
   TextInput,
+  Button,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Splash from './Splash';
-import {useIsFocused, useRoute} from '@react-navigation/native';
+import {
+  NavigationContainer,
+  useIsFocused,
+  useRoute,
+} from '@react-navigation/native';
 import Loader from '../components/Loader';
 import {RootNavigationProps} from './AppNavigator';
 import {colors} from '../assets/css/colors';
+import {
+  DrawerNavigationProp,
+  createDrawerNavigator,
+} from '@react-navigation/drawer';
+import {ItemType, SectionType, sections} from '../components/Data';
+import {handleLogout} from '../components/Handle';
+import ButtonTab from '../navigations/ButtonTab';
+
+// interface MyProps {
+//   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
+// }
 
 interface MyProps {
-  navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
+  navigation: DrawerNavigationProp<RootNavigationProps, 'Home'>; // Sử dụng DrawerNavigationProp thay vì StackNavigationProp
 }
 
-type ItemType = {
-  id: string;
-  title: string;
-  image: any; // Change the type to 'any'
-};
+// function handleLogout(
+//   navigation: StackNavigationProp<RootNavigationProps, 'Home'>,
+// ) {
+//   Alert.alert(
+//     'Xác nhận',
+//     'Bạn muốn đăng xuất phải không?',
+//     [
+//       {
+//         text: 'Không',
+//         onPress: () => console.log('Không'),
+//         style: 'cancel',
+//       },
+//       {
+//         text: 'Có',
+//         onPress: () => navigation.navigate('Login'), // Điều hướng đến màn hình đăng nhập
+//       },
+//     ],
+//     {cancelable: false},
+//   );
+// }
+const renderFlatList = ({item}: {item: SectionType}) => (
+  <>
+    {renderSectionHeader({section: item})}
+    <FlatList
+      data={item.data}
+      renderItem={renderItem}
+      keyExtractor={item => item.id.toString()}
+      numColumns={item.data.length === 1 ? 1 : 2}
+      contentContainerStyle={styles.contentContainerStyle}
+    />
+  </>
+);
 
-type SectionType = {
-  title: string;
-  data: ItemType[];
-};
+const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
+  <View style={styles.sectionContainer}>
+    <Text style={styles.sectionHeader}>{title}</Text>
+  </View>
+);
+const renderItem = ({item}: {item: ItemType}) => (
+  <TouchableOpacity
+    style={styles.item}
+    onPress={() =>
+      Alert.alert(
+        'Thông báo',
+        'Giá của sản phẩm: $' + '\nTên của sản phẩm: ' + item.title,
+      )
+    }>
+    <Image source={item.image} style={styles.img}></Image>
+    <Text style={styles.textItem}>{item.title}</Text>
+  </TouchableOpacity>
+);
+function HomeScreen({navigation}: MyProps) {
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      {/* <Button onPress={() => navigation.navigate('Login')} title="Logout" /> */}
+      <FlatList
+        data={sections}
+        renderItem={renderFlatList}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </View>
+  );
+}
 
-const sections: SectionType[] = [
-  {
-    title: 'Thông báo',
-    data: [
-      {
-        image: require('../assets/images/icons/Notification.png'),
-        id: '1',
-        title: 'Thông báo',
-      },
-    ],
-  },
-  {
-    title: 'Truy cập thông tin',
-    data: [
-      {
-        image: require('../assets/images/icons/Calendar.png'),
-        id: '2',
-        title: 'Thời khóa biểu',
-      },
-      {
-        image: require('../assets/images/icons/Exam.png'),
-        id: '3',
-        title: 'Kiểm tra',
-      },
-      // Add more access items here if needed
-    ],
-  },
-  {
-    title: 'Báo cáo',
-    data: [
-      {
-        image: require('../assets/images/icons/Attendance.png'),
-        id: '4',
-        title: 'Điểm danh',
-      },
-      {
-        image: require('../assets/images/icons/Point.png'),
-        id: '5',
-        title: 'Điểm',
-      },
-      // Add more report items here if needed
-    ],
-  },
-];
+function LogoutScreen({navigation}: MyProps) {
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <Button onPress={() => handleLogout(navigation)} title="Logout" />
+    </View>
+  );
+}
+
+const Drawer = createDrawerNavigator();
+
 const Home = ({navigation}: MyProps): React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(false);
-
-  const renderItem = ({item}: {item: ItemType}) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() =>
-        Alert.alert(
-          'Thông báo',
-          'Giá của sản phẩm: $' + '\nTên của sản phẩm: ' + item.title,
-        )
-      }>
-      <Image source={item.image} style={styles.img}></Image>
-      <Text style={{marginTop: 30}}>{item.title}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderFlatList = ({item}: {item: SectionType}) => (
-    <>
-      {renderSectionHeader({section: item})}
-      <FlatList
-        data={item.data}
-        renderItem={renderItem}
-        keyExtractor={item => item.id.toString()}
-        numColumns={item.data.length === 1 ? 1 : 2}
-        contentContainerStyle={{
-          justifyContent: item.data.length === 1 ? 'center' : 'flex-start',
-          alignItems: item.data.length === 1 ? 'center' : 'flex-start',
-        }}
-      />
-    </>
-  );
 
   const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionHeader}>{title}</Text>
     </View>
   );
+
   return (
-    <SafeAreaView style={{backgroundColor: 'white', flex: 1}}>
+    <SafeAreaView style={styles.safeAreaView}>
       <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
-      <View style={styles.header}>
-        <Text>Fullstack Notes App</Text>
-      </View>
-      <FlatList
-        data={sections}
-        renderItem={renderFlatList}
-        keyExtractor={(item, index) => index.toString()}
-      />
+      {/* <View style={styles.header}> */}
+      <Drawer.Navigator
+        initialRouteName="E-School"
+        screenOptions={{
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: colors.primaryColor,
+          },
+          headerTintColor: 'white',
+          headerTitleStyle: {
+            fontSize: 25,
+            fontWeight: 'bold',
+          },
+        }}>
+        <Drawer.Screen name="E-School" component={HomeScreen} />
+        <Drawer.Screen name="Logout" component={LogoutScreen} />
+      </Drawer.Navigator>
+      {/* <ButtonTab navigation={navigation} /> */}
     </SafeAreaView>
   );
 };
@@ -134,6 +150,7 @@ const Home = ({navigation}: MyProps): React.JSX.Element => {
 export default Home;
 
 const styles = StyleSheet.create({
+  safeAreaView: {backgroundColor: 'white', flex: 1},
   container: {
     flex: 1,
   },
@@ -148,18 +165,19 @@ const styles = StyleSheet.create({
   item: {
     backgroundColor: '#fff',
     padding: 20,
-    width: 170,
-    height: 220,
+    width: 160,
+    height: 140,
     alignItems: 'center',
-    borderWidth: 0.5,
+    // borderWidth: 0.5,
     color: 'black',
     margin: 10,
-    borderRadius: 8,
+    borderRadius: 20,
     justifyContent: 'center',
+    elevation: 5,
   },
   img: {
-    width: 120,
-    height: 120,
+    width: 70,
+    height: 70,
   },
   sectionHeader: {
     fontSize: 20,
@@ -168,9 +186,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 15,
   },
   sectionContainer: {
     justifyContent: 'center',
     alignItems: 'center',
   },
+  contentContainerStyle: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textItem: {
+    marginTop: 15,
+    color: colors.primaryColor,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
+
+// const renderFlatList = ({item}: {item: SectionType}) => (
+//   <>
+//     {renderSectionHeader({section: item})}
+//     <FlatList
+//       data={item.data}
+//       renderItem={renderItem}
+//       keyExtractor={item => item.id.toString()}
+//       numColumns={item.data.length === 1 ? 1 : 2}
+//       contentContainerStyle={styles.contentContainerStyle}
+//     />
+//   </>
+// );

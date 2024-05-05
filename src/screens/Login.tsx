@@ -11,8 +11,8 @@ interface MyProps {
 }
 
 const Login = ({navigation}: MyProps) => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>('Kamren19@gmail.com');
+  const [password, setPassword] = useState<string>('password 1');
   const [badEmail, setBadEmail] = useState<boolean>(false);
   const [badPassword, setBadPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);

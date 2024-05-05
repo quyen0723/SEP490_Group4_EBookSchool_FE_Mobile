@@ -8,26 +8,8 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import type {PropsWithChildren} from 'react';
-import {
-  Dimensions,
-  FlatList,
-  SafeAreaView,
-  ScrollView,
-  SectionList,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {View} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 import AppNavigator from './src/screens/AppNavigator';
 
 export type RootStackParamsList = {

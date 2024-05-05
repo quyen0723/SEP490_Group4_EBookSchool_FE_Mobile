@@ -5,11 +5,15 @@ import {NavigationContainer} from '@react-navigation/native';
 import Splash from './Splash';
 import Login from './Login';
 import Home from './Home';
+import ButtonTab from '../navigations/ButtonTab';
 
 export type RootNavigationProps = {
   Splash: undefined;
   Login: undefined;
   Home: undefined;
+  // Notification: undefined;
+  // Profile: undefined;
+  ButtonTab: undefined;
 };
 
 const Stack = createStackNavigator<RootNavigationProps>();
@@ -30,7 +34,7 @@ const AppNavigator = () => {
         />
         <Stack.Screen
           name="Home"
-          component={Home}
+          component={ButtonTab}
           options={{headerShown: false}}
         />
       </Stack.Navigator>
