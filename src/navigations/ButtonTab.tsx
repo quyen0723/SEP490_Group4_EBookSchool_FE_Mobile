@@ -1,21 +1,30 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Home from '../screens/Home';
+import HomeMain from '../screens/Home';
 import Notification from '../screens/Notification';
 import Profile from '../screens/Profile';
 import {colors} from '../assets/css/colors';
 
 import IMAGES from '../assets/images';
 import {Image, StyleSheet, View} from 'react-native';
+import {User} from '../screens/types';
 
 const BottomTab = createBottomTabNavigator();
 
-const ButtonTab = ({navigation}: {navigation: any}) => {
+const ButtonTab = ({navigation, route}: {navigation: any; route: any}) => {
+  const user = route.params?.user;
   return (
     <BottomTab.Navigator
       screenOptions={{
+        tabBarStyle: {
+          backgroundColor: colors.primaryColor,
+          borderTopRightRadius: 20,
+          borderTopLeftRadius: 20,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
         headerTitleAlign: 'center',
-        tabBarLabel: '',
+        tabBarLabel: () => null,
         headerStyle: {
           backgroundColor: colors.primaryColor,
         },
@@ -27,18 +36,20 @@ const ButtonTab = ({navigation}: {navigation: any}) => {
       }}>
       <BottomTab.Screen
         name="Home"
-        component={Home}
+        component={HomeMain}
         options={{
           headerShown: false,
           tabBarIcon: ({focused}) => (
-            <Image
-              source={require('../assets/images/icons/Home.png')}
-              style={{
-                height: 30,
-                width: 30,
-                tintColor: focused ? colors.primaryColor : 'black',
-              }}
-            />
+            <View style={[styles.tabBarItem, focused && styles.focusedTab]}>
+              <Image
+                source={require('../assets/images/icons/Home.png')}
+                style={{
+                  height: 27,
+                  width: 27,
+                  tintColor: focused ? colors.primaryColor : 'white',
+                }}
+              />
+            </View>
           ),
         }}
       />
@@ -47,35 +58,37 @@ const ButtonTab = ({navigation}: {navigation: any}) => {
         component={Notification}
         options={{
           tabBarIcon: ({focused}) => (
-            <Image
-              source={require('../assets/images/icons/Chat.png')}
-              style={{
-                height: 30,
-                width: 30,
-                tintColor: focused ? colors.primaryColor : 'black',
-              }}
-            />
-          ),
-        }}
-      />
-      <BottomTab.Screen
-        name="Hồ sơ"
-        component={Profile}
-        options={{
-          tabBarIcon: ({focused}) => (
             <View style={[styles.tabBarItem, focused && styles.focusedTab]}>
               <Image
-                source={require('../assets/images/icons/Profile.png')}
+                source={require('../assets/images/icons/Chat.png')}
                 style={{
-                  height: 30,
-                  width: 30,
-                  tintColor: focused ? 'blue' : 'black',
+                  height: 27,
+                  width: 27,
+                  tintColor: focused ? colors.primaryColor : 'white',
                 }}
               />
             </View>
           ),
         }}
       />
+      <BottomTab.Screen
+        name="Thông tin cá nhân"
+        component={Profile}
+        initialParams={{userId: route.params?.userId}}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <View style={[styles.tabBarItem, focused && styles.focusedTab]}>
+              <Image
+                source={require('../assets/images/icons/Profile.png')}
+                style={{
+                  height: 27,
+                  width: 27,
+                  tintColor: focused ? colors.primaryColor : 'white',
+                }}
+              />
+            </View>
+          ),
+        }}></BottomTab.Screen>
     </BottomTab.Navigator>
   );
 };
@@ -95,9 +108,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   focusedTab: {
-    backgroundColor: 'red',
+    backgroundColor: 'white',
     borderRadius: 100, // Set a large value to make it circular
-    padding: 5, // Adjust the padding according to your preference
+    padding: 7, // Adjust the padding according to your preference
   },
 });
 

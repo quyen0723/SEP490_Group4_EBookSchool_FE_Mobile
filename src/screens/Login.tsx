@@ -3,16 +3,23 @@ import React, {useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {TextInput} from 'react-native-gesture-handler';
 import Loader from '../components/Loader';
-import {RootNavigationProps} from './AppNavigator';
 import {colors} from '../assets/css/colors';
+import {RootNavigationProps} from './types';
 
+interface User {
+  _id: string; // Add _id field
+  name: string;
+  email: string;
+  // Add other user fields here
+}
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'Login'>;
 }
 
 const Login = ({navigation}: MyProps) => {
-  const [email, setEmail] = useState<string>('Kamren19@gmail.com');
-  const [password, setPassword] = useState<string>('password 1');
+  const [email, setEmail] = useState<string>('Quyennnmce161096@fpt.edu.vn');
+  const [password, setPassword] = useState<string>('Password 1');
+  const [data, setData] = useState<[]>();
   const [badEmail, setBadEmail] = useState<boolean>(false);
   const [badPassword, setBadPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -68,7 +75,10 @@ const Login = ({navigation}: MyProps) => {
 
       if (user) {
         setLoading(false);
-        navigation.navigate('Home', {id: user._id});
+        // navigation.navigate('HomeMain', {id: user._id});
+        navigation.navigate('HomeMain', {userId: user._id});
+        // setData(user);
+        // console.log(user._id);
       } else {
         throw new Error('Invalid email or password');
       }

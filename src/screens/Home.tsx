@@ -21,7 +21,6 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import Loader from '../components/Loader';
-import {RootNavigationProps} from './AppNavigator';
 import {colors} from '../assets/css/colors';
 import {
   DrawerNavigationProp,
@@ -30,6 +29,8 @@ import {
 import {ItemType, SectionType, sections} from '../components/Data';
 import {handleLogout} from '../components/Handle';
 import ButtonTab from '../navigations/ButtonTab';
+import {RootNavigationProps} from './types';
+import Profile from './Profile';
 
 // interface MyProps {
 //   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
@@ -39,26 +40,6 @@ interface MyProps {
   navigation: DrawerNavigationProp<RootNavigationProps, 'Home'>; // Sử dụng DrawerNavigationProp thay vì StackNavigationProp
 }
 
-// function handleLogout(
-//   navigation: StackNavigationProp<RootNavigationProps, 'Home'>,
-// ) {
-//   Alert.alert(
-//     'Xác nhận',
-//     'Bạn muốn đăng xuất phải không?',
-//     [
-//       {
-//         text: 'Không',
-//         onPress: () => console.log('Không'),
-//         style: 'cancel',
-//       },
-//       {
-//         text: 'Có',
-//         onPress: () => navigation.navigate('Login'), // Điều hướng đến màn hình đăng nhập
-//       },
-//     ],
-//     {cancelable: false},
-//   );
-// }
 const renderFlatList = ({item}: {item: SectionType}) => (
   <>
     {renderSectionHeader({section: item})}
@@ -113,7 +94,7 @@ function LogoutScreen({navigation}: MyProps) {
 
 const Drawer = createDrawerNavigator();
 
-const Home = ({navigation}: MyProps): React.JSX.Element => {
+const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
@@ -141,13 +122,18 @@ const Home = ({navigation}: MyProps): React.JSX.Element => {
         }}>
         <Drawer.Screen name="E-School" component={HomeScreen} />
         <Drawer.Screen name="Logout" component={LogoutScreen} />
+        <Drawer.Screen
+          name="Profile"
+          component={Profile}
+          // initialParams={{user}}
+        />
       </Drawer.Navigator>
       {/* <ButtonTab navigation={navigation} /> */}
     </SafeAreaView>
   );
 };
 
-export default Home;
+export default HomeMain;
 
 const styles = StyleSheet.create({
   safeAreaView: {backgroundColor: 'white', flex: 1},
@@ -217,3 +203,24 @@ const styles = StyleSheet.create({
 //     />
 //   </>
 // );
+
+// function handleLogout(
+//   navigation: StackNavigationProp<RootNavigationProps, 'Home'>,
+// ) {
+//   Alert.alert(
+//     'Xác nhận',
+//     'Bạn muốn đăng xuất phải không?',
+//     [
+//       {
+//         text: 'Không',
+//         onPress: () => console.log('Không'),
+//         style: 'cancel',
+//       },
+//       {
+//         text: 'Có',
+//         onPress: () => navigation.navigate('Login'), // Điều hướng đến màn hình đăng nhập
+//       },
+//     ],
+//     {cancelable: false},
+//   );
+// }
