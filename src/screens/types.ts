@@ -6,6 +6,8 @@ export type RootNavigationProps = {
     // Profile: undefined;
     ButtonTab: undefined;
     Profile: {user: User};
+    Notification: undefined;
+    NotificationDetail: undefined;
   };
   
   export interface User {
