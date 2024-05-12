@@ -2,14 +2,15 @@ import {View, Text} from 'react-native';
 import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {NavigationContainer} from '@react-navigation/native';
-import Splash from './Splash';
-import Login from './Login';
-import Home from './Home';
-import ButtonTab from '../navigations/ButtonTab';
-import {RootNavigationProps} from './types';
-import Profile from './Profile';
-import Notification from './Notification';
-import NotificationDetail from './NotificationDetail';
+import Splash from '../screens/Splash';
+import Login from '../screens/Login';
+import Home from '../screens/Home';
+import ButtonTab from './ButtonTab';
+import {RootNavigationProps} from '../screens/types';
+import Profile from '../screens/Profile';
+import Notification from '../screens/Notification';
+import NotificationDetail from '../screens/NotificationDetail';
+import WeeklyTimeTable from '../screens/WeeklyTimeTable';
 
 const Stack = createStackNavigator<RootNavigationProps>();
 
@@ -45,6 +46,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="NotificationDetail"
           component={NotificationDetail} // Add the Profile component as a screen
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="WeeklyTimeTable"
+          component={WeeklyTimeTable} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
       </Stack.Navigator>

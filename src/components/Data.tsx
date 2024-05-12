@@ -10,7 +10,7 @@ export type SectionType = {
 };
 
 export const sections: SectionType[] = [
-  {
+  { 
     title: 'Thông báo',
     data: [
       {

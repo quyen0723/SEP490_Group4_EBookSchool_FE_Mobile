@@ -92,7 +92,7 @@ const Profile = ({route}: any) => {
             <Text style={styles.styleText}>Con liệt sĩ, thương binh: </Text>
             {user.martyrson}
           </Text>
-          <View style={styles.userInfoRow}>
+          {/* <View style={styles.userInfoRow}>
             <Text style={styles.userInfoText}>
               <Text style={styles.styleText}>Họ tên cha: </Text>
               {user.namefather}
@@ -101,28 +101,41 @@ const Profile = ({route}: any) => {
               <Text style={styles.styleText}>Nghề nghiệp: </Text>
               {user.occupationfather}
             </Text>
-          </View>
-          <View style={styles.userInfoRow}>
-            <Text style={styles.userInfoText}>
-              <Text style={styles.styleText}>Họ tên mẹ: </Text>
-              {user.namemother}
-            </Text>
-            <Text style={styles.userInfoText}>
-              <Text style={styles.styleText}>Nghề nghiệp: </Text>
-              {user.occupationmother}
-            </Text>
-          </View>
+          </View> */}
 
-          <View style={styles.userInfoRow}>
-            <Text style={styles.userInfoText}>
-              <Text style={styles.styleText}>Họ tên người giám hộ: </Text>
-              {user.nameGuardian}
-            </Text>
-            <Text style={styles.userInfoText}>
-              <Text style={styles.styleText}>Nghề nghiệp: </Text>
-              {user.occipationguardian}
-            </Text>
-          </View>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Họ tên cha: </Text>
+            {user.namefather}
+          </Text>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Nghề nghiệp: </Text>
+            {user.occupationfather}
+          </Text>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Số điện thoại cha: </Text>
+            {user.phonefather}
+          </Text>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Họ tên mẹ: </Text>
+            {user.namemother}
+          </Text>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Nghề nghiệp: </Text>
+            {user.occupationmother}
+          </Text>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Số điện thoại mẹ: </Text>
+            {user.phonemother}
+          </Text>
+
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Họ tên người giám hộ: </Text>
+            {user.nameGuardian}
+          </Text>
+          <Text style={styles.userInfoText}>
+            <Text style={styles.styleText}>Nghề nghiệp: </Text>
+            {user.occipationguardian}
+          </Text>
 
           {/* <Text style={styles.userInfoText}>
             <Text style={styles.styleText}></Text>
@@ -165,7 +178,7 @@ const styles = StyleSheet.create({
   },
   userInfoText: {
     marginBottom: 9,
-    fontSize: 10,
+    fontSize: 12,
     color: 'black',
   },
   userInfoRow: {

@@ -1,5 +1,5 @@
 import {StackNavigationProp} from '@react-navigation/stack';
-import {RootNavigationProps} from '../screens/AppNavigator';
+import {RootNavigationProps} from '../navigations/AppNavigator';
 import {Alert} from 'react-native';
 
 export function handleLogout(

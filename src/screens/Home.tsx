@@ -31,7 +31,9 @@ import {handleLogout} from '../components/Handle';
 import ButtonTab from '../navigations/ButtonTab';
 import {RootNavigationProps} from './types';
 import Profile from './Profile';
-
+import Notification from './Notification';
+import {useNavigation} from '@react-navigation/native';
+import WeeklyTimeTable from './WeeklyTimeTable';
 // interface MyProps {
 //   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
 // }
@@ -40,12 +42,18 @@ interface MyProps {
   navigation: DrawerNavigationProp<RootNavigationProps, 'Home'>; // Sử dụng DrawerNavigationProp thay vì StackNavigationProp
 }
 
-const renderFlatList = ({item}: {item: SectionType}) => (
+const renderFlatList = ({
+  item,
+  navigation,
+}: {
+  item: SectionType;
+  navigation?: MyProps;
+}) => (
   <>
     {renderSectionHeader({section: item})}
     <FlatList
       data={item.data}
-      renderItem={renderItem}
+      renderItem={({item}) => renderItem({item, navigation: navigation!})}
       keyExtractor={item => item.id.toString()}
       numColumns={item.data.length === 1 ? 1 : 2}
       contentContainerStyle={styles.contentContainerStyle}
@@ -53,31 +61,60 @@ const renderFlatList = ({item}: {item: SectionType}) => (
   </>
 );
 
+const handleItemClickAction = ({
+  item,
+  navigation,
+}: {
+  item: ItemType;
+  navigation?: MyProps;
+}) => {
+  if (navigation) {
+    const itemId = item.id.toString();
+
+    if (itemId === '1') {
+      console.log('Item IDĐ:', item.id);
+      navigation.navigate('Notification');
+    } else if (itemId === '2') {
+      navigation.navigate('WeeklyTimeTable');
+    } else {
+      // Handle other item IDs or show an alert
+      console.log('Item ID:', item.id);
+    }
+  } else {
+    console.error('Navigation prop is undefined');
+  }
+};
+
 const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
   <View style={styles.sectionContainer}>
     <Text style={styles.sectionHeader}>{title}</Text>
   </View>
 );
-const renderItem = ({item}: {item: ItemType}) => (
-  <TouchableOpacity
-    style={styles.item}
-    onPress={() =>
-      Alert.alert(
-        'Thông báo',
-        'Giá của sản phẩm: $' + '\nTên của sản phẩm: ' + item.title,
-      )
-    }>
-    <Image source={item.image} style={styles.img}></Image>
-    <Text style={styles.textItem}>{item.title}</Text>
-  </TouchableOpacity>
-);
+const renderItem = ({
+  item,
+  navigation,
+}: {
+  item: ItemType;
+  navigation: MyProps;
+}) => {
+  const handleItemClick = () => {
+    handleItemClickAction({item, navigation});
+  };
+
+  return (
+    <TouchableOpacity style={styles.item} onPress={handleItemClick}>
+      <Image source={item.image} style={styles.img}></Image>
+      <Text style={styles.textItem}>{item.title}</Text>
+    </TouchableOpacity>
+  );
+};
 function HomeScreen({navigation}: MyProps) {
   return (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
       {/* <Button onPress={() => navigation.navigate('Login')} title="Logout" /> */}
       <FlatList
         data={sections}
-        renderItem={renderFlatList}
+        renderItem={({item}) => renderFlatList({item, navigation})}
         keyExtractor={(item, index) => index.toString()}
       />
     </View>
@@ -97,12 +134,6 @@ const Drawer = createDrawerNavigator();
 const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(false);
 
-  const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
-    <View style={styles.sectionContainer}>
-      <Text style={styles.sectionHeader}>{title}</Text>
-    </View>
-  );
-
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
@@ -120,13 +151,19 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
             fontWeight: 'bold',
           },
         }}>
-        <Drawer.Screen name="E-School" component={HomeScreen} />
+        <Drawer.Screen
+          name="E-School"
+          component={HomeScreen}
+          initialParams={{navigation}}
+        />
         <Drawer.Screen name="Logout" component={LogoutScreen} />
         <Drawer.Screen
           name="Profile"
           component={Profile}
           // initialParams={{user}}
         />
+        <Drawer.Screen name="Notification" component={Notification} />
+        <Drawer.Screen name="WeeklyTimeTable" component={WeeklyTimeTable} />
       </Drawer.Navigator>
       {/* <ButtonTab navigation={navigation} /> */}
     </SafeAreaView>
@@ -224,3 +261,9 @@ const styles = StyleSheet.create({
 //     {cancelable: false},
 //   );
 // }
+
+// const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
+//   <View style={styles.sectionContainer}>
+//     <Text style={styles.sectionHeader}>{title}</Text>
+//   </View>
+// );

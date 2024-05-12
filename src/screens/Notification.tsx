@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   FlatList,
+  Button,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -26,16 +27,34 @@ type Notes = {
 };
 const Notification = ({navigation}: MyProps) => {
   const [notifications, setNotifications] = useState<Notes[]>([]);
+  const [filteredNotifications, setFilteredNotifications] = useState<Notes[]>(
+    [],
+  );
   const [keyword, setKeyword] = useState<string>('');
   const isFocused = useIsFocused();
   const [data, setData] = useState<ItemType[]>([]);
-  const filterItemName = () => {
-    setData(data.filter(item => item.title.includes(keyword.toLowerCase())));
-  };
+  // const filterItemName = () => {
+  //   setData(data.filter(item => item.title.includes(keyword.toLowerCase())));
+  // };
 
   useEffect(() => {
     getNotes();
   }, [isFocused]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      title: 'Notification',
+      headerLeft: () => (
+        // <Button onPress={() => navigation.goBack()} title="Go Back" />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Image
+            style={styles.imge}
+            source={require('../assets/images/icons/Back.png')}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const getNotes = async () => {
     const headers = new Headers();
@@ -50,7 +69,20 @@ const Notification = ({navigation}: MyProps) => {
 
     const data = await res.json();
     setNotifications(data);
+    setFilteredNotifications(data);
     console.log(data);
+  };
+
+  const filterItemName = (text: string) => {
+    setKeyword(text);
+    if (text.trim() === '') {
+      setFilteredNotifications(notifications);
+    } else {
+      const filtered = notifications.filter(item =>
+        item.title.toLowerCase().includes(text.toLowerCase()),
+      );
+      setFilteredNotifications(filtered);
+    }
   };
   return (
     <View>
@@ -62,7 +94,7 @@ const Notification = ({navigation}: MyProps) => {
           padding: 20,
         }}>
         <TextInput
-          onChangeText={text => setKeyword(text)}
+          onChangeText={filterItemName}
           style={{
             borderWidth: 1,
             borderColor: colors.primaryColor,
@@ -70,11 +102,11 @@ const Notification = ({navigation}: MyProps) => {
             borderRadius: 15,
             paddingLeft: 10,
             backgroundColor: 'white',
-            flex: 1, // Take up remaining space
+            flex: 1,
           }}
           placeholder="Tìm kiếm..."
         />
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={filterItemName}
           style={{
             backgroundColor: colors.primaryColor,
@@ -90,13 +122,13 @@ const Notification = ({navigation}: MyProps) => {
             source={require('../assets/images/icons/Search.png')}
             style={{height: 20, width: 20}}
           />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
-      {notifications.length > 0 ? (
+      {filteredNotifications.length > 0 ? (
         <FlatList
-          data={notifications}
-          keyExtractor={item => item.id.toString()} // Add keyExtractor
-          renderItem={({item, index}) => {
+          data={filteredNotifications}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => {
             return (
               <TouchableOpacity
                 onPress={() =>
@@ -118,7 +150,7 @@ const Notification = ({navigation}: MyProps) => {
         />
       ) : (
         <View style={styles.noDataView}>
-          <Text style={styles.title}>Notes not found</Text>
+          <Text style={styles.title}>Không có thông báo nào tương tự</Text>
         </View>
       )}
     </View>
@@ -143,6 +175,12 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 18,
     fontWeight: '600',
+  },
+  imge: {
+    width: 27,
+    height: 27,
+    tintColor: '#FFFFFF',
+    marginLeft: 10,
   },
   btn: {
     width: 200,

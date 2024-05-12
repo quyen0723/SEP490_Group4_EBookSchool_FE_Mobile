@@ -10,7 +10,8 @@ import React, {useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {View} from 'react-native';
 
-import AppNavigator from './src/screens/AppNavigator';
+import AppNavigator from './src/navigations/AppNavigator';
+import ExampleTable from './src/screens/ExampleTable';
 
 export type RootStackParamsList = {
   Home: undefined;
@@ -32,6 +33,7 @@ const App = () => {
     // </NavigationContainer>
     <View style={{flex: 1}}>
       <AppNavigator />
+      {/* <ExampleTable /> */}
     </View>
   );
 };
