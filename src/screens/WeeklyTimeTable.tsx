@@ -13,6 +13,8 @@ interface MyProps {
 
 type Item = {
   name: string;
+  slotTime: string; // Thêm slotTime vào kiểu dữ liệu Item
+  teacher: string;
   height: number;
 };
 
@@ -43,21 +45,80 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
   const [items, setItems] = useState<Items>({});
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const agendaRef = useRef(null);
+  const fromDate = studentWeeklyTimeTableDates.data.fromDate;
+  const toDate = studentWeeklyTimeTableDates.data.toDate;
+
   const loadItems = (day: any) => {
     setTimeout(() => {
       let newItems: Items = {...items};
 
+      const fromDate = studentWeeklyTimeTableDates.data.fromDate;
+      const toDate = studentWeeklyTimeTableDates.data.toDate;
+
+      const convertDateFormat = (dateString: string): string => {
+        const [day, month, year] = dateString.split('/');
+        return `${year}-${month}-${day}`;
+      };
+      const fromDateFormatted = new Date(convertDateFormat(fromDate));
+      const toDateFormatted = new Date(convertDateFormat(toDate));
+
       for (let i = -15; i < 85; i++) {
         const time = day.timestamp + i * 24 * 60 * 60 * 1000;
-        const strTime = timeToString(time);
-        if (!newItems[strTime]) {
-          newItems[strTime] = [];
-          // const numItems = Math.floor(Math.random() * 3 + 1);
-          for (let j = 0; j < 10; j++) {
+        const currentDate = new Date(time);
+
+        if (
+          currentDate >= fromDateFormatted &&
+          currentDate <= toDateFormatted
+        ) {
+          const strTime = timeToString(time);
+          if (!newItems[strTime]) {
+            newItems[strTime] = [];
+            const slots = getSlotsForDay(currentDate);
+            if (slots) {
+              for (let j = 1; j <= 10; j++) {
+                const slot = slots[j - 1];
+                if (slot) {
+                  newItems[strTime].push({
+                    // name: `Môn học: ${
+                    //   slot.subject
+                    // }\nGiáo viên: ${slot.teacher.trim()}`,
+                    name: `Môn học: ${slot.subject}`,
+                    slotTime: slot.slotTime,
+                    teacher: `Giáo viên: ${slot.teacher}`,
+                    height: Math.max(50, Math.floor(Math.random() * 150)),
+                  });
+                } else {
+                  newItems[strTime].push({
+                    name: `Không có tiết học`,
+                    slotTime: ``,
+                    teacher: ``,
+                    height: Math.max(50, Math.floor(Math.random() * 150)),
+                  });
+                }
+              }
+            } else {
+              for (let j = 1; j <= 10; j++) {
+                newItems[strTime].push({
+                  name: `No data ${strTime} #${j}`,
+                  slotTime: ``,
+                  teacher: ``,
+                  height: Math.max(50, Math.floor(Math.random() * 150)),
+                });
+              }
+            }
+          }
+        } else {
+          const strTime = timeToString(time);
+          if (!newItems[strTime]) {
+            newItems[strTime] = [];
+            // for (let j = 0; j < 10; j++) {
             newItems[strTime].push({
-              name: 'Item for ' + strTime + ' #' + j,
+              name: `Không có tiết học`,
+              slotTime: ``,
+              teacher: ``,
               height: Math.max(50, Math.floor(Math.random() * 150)),
             });
+            // }
           }
         }
       }
@@ -66,6 +127,38 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
     }, 1000);
   };
 
+  const getSlotsForDay = (date: Date): any[] | null => {
+    const dayOfWeek = date.getDay();
+    const dayDetails = studentWeeklyTimeTableDates.data.details.find(
+      detail => detail.weekDate === getWeekDayName(dayOfWeek),
+    );
+
+    if (dayDetails) {
+      return dayDetails.slots;
+    }
+    return null;
+  };
+
+  const getWeekDayName = (dayIndex: number): string => {
+    switch (dayIndex) {
+      case 0:
+        return 'Sun';
+      case 1:
+        return 'Mon';
+      case 2:
+        return 'Tue';
+      case 3:
+        return 'Wed';
+      case 4:
+        return 'Thu';
+      case 5:
+        return 'Fri';
+      case 6:
+        return 'Sat';
+      default:
+        return '';
+    }
+  };
   const renderItem = (item: Item) => {
     return (
       <TouchableOpacity style={{marginRight: 10, marginTop: 17}}>
@@ -77,8 +170,71 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}>
-              <Text>{item.name}</Text>
-              <Avatar.Text label="J" />
+              {item.name.startsWith(`Không có tiết học`) ? (
+                <Text>{item.name}</Text>
+              ) : (
+                <>
+                  <View style={{flex: 7}}>
+                    <Text
+                      style={{
+                        color: colors.warningColor,
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                      }}>
+                      {item.name}
+                    </Text>
+                    <Text
+                      style={{
+                        color: colors.textColor,
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        fontStyle: 'italic',
+                      }}>
+                      {item.teacher}
+                    </Text>
+                  </View>
+                  <View style={{flex: 3, alignItems: 'center'}}>
+                    <View
+                      style={{
+                        height: 20,
+                        width: 70,
+                        backgroundColor: 'green',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderRadius: 20,
+                      }}>
+                      <Text
+                        style={{
+                          color: colors.whiteColor,
+                          fontWeight: 'bold',
+                          fontStyle: 'italic',
+                        }}>
+                        Có mặt
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        height: 20,
+                        width: 90,
+                        backgroundColor: 'blue',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginTop: 3,
+                        borderRadius: 5,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 'bold',
+                          color: colors.whiteColor,
+                        }}>
+                        {item.slotTime}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+              {/* <Avatar.Text label="J" /> */}
             </View>
           </Card.Content>
         </Card>
@@ -134,7 +290,7 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
 
     // const weekRange = `${startDay}/${startMonth} - ${endDay}/${endMonth}`;
     const weekRange = `${startMonth}/${startDay} - ${endMonth}/${endDay}`;
-    console.log(weekRange);
+    // console.log(weekRange);
     return (
       <View>
         <View style={styles.textCenter}>
@@ -211,24 +367,12 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
         onDayPress={handleDayPress}
         VisibleMonthsChange={handleVisibleMonthsChange}
         firstDay={1}
-        // theme={{
-
-        //   // calendarBackground: theme.colors.background,
-        //   textSectionTitleColor: theme.colors.onBackground,
-        //   textMonthFontWeight: 'bold',
-        //   // selectedDayBackgroundColor: 'transparent',
-        //   // selectedDayTextColor: theme.colors.onBackground,
-        //   // todayTextColor: theme.colors.onBackground,
-        //   // todayBackgroundColor: theme.colors.primary,
-        //   dayTextColor: colors.primaryColor, //Disabled days
-        //   // dotColor: theme.colors.primary,
-        //   // selectedDotColor: theme.colors.onBackground,
-        //   // monthTextColor: theme.colors.onBackground,
-        // }}
         theme={{
           dayTextColor: colors.primaryColor,
           textSectionTitleColor: theme.colors.onBackground,
           textMonthFontWeight: 'bold',
+          todayTextColor: colors.blackColor,
+          textDayHeaderFontWeight: 'bold',
         }}
       />
     </View>
@@ -236,6 +380,7 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
 };
 
 export default WeeklyTimeTable;
+
 const styles = StyleSheet.create({
   textSemester: {
     fontSize: 20,
@@ -337,3 +482,84 @@ const styles = StyleSheet.create({
   },
   notificationsDate: {color: 'black'},
 });
+
+// const getSubjectForId = (id: number): string => {
+//   const dayDetails = studentWeeklyTimeTableDates.data.details.find(
+//     detail => detail.id === id,
+//   );
+
+//   if (dayDetails) {
+//     // Lấy ngày tương ứng với id
+//     switch (id) {
+//       case 1:
+//         return 'Mon';
+//       case 2:
+//         return 'Tue';
+//       case 3:
+//         return 'Wed';
+//       case 4:
+//         return 'Thu';
+//       case 5:
+//         return 'Fri';
+//       case 6:
+//         return 'Sat';
+//       case 7:
+//         return 'Sun';
+//       default:
+//         return '';
+//     }
+//   }
+//   return '';
+// };
+
+// const MONDAY = 1;
+// const TUESDAY = 2;
+// const WEDNESDAY = 3;
+// const THURSDAY = 4;
+// const FRIDAY = 5;
+// const SATURDAY = 6;
+// const SUNDAY = 7;
+
+// const getSubjectForDay = (id: number): string => {
+//   let day: string;
+//   switch (id) {
+//     case MONDAY:
+//       day = 'Mon';
+//       break;
+//     case TUESDAY:
+//       day = 'Tue';
+//       break;
+//     case WEDNESDAY:
+//       day = 'Wed';
+//       break;
+//     case THURSDAY:
+//       day = 'Thu';
+//       break;
+//     case FRIDAY:
+//       day = 'Fri';
+//       break;
+//     case SATURDAY:
+//       day = 'Sat';
+//       break;
+//     case SUNDAY:
+//       day = 'Sun';
+//       break;
+//     default:
+//       day = '';
+//   }
+//   // console.log('id:', id);
+
+//   // console.log('dayyy:', day);
+
+//   const dayDetails = studentWeeklyTimeTableDates.data.details.find(
+//     detail => detail.id === id,
+//   );
+
+//   if (dayDetails) {
+//     const subjectDetails = dayDetails.slots.find(slot => slot.id === id);
+//     if (subjectDetails) {
+//       return subjectDetails.subject;
+//     }
+//   }
+//   return '';
+// };
