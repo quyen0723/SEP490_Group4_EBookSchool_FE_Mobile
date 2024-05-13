@@ -34,6 +34,9 @@ import Profile from './Profile';
 import Notification from './Notification';
 import {useNavigation} from '@react-navigation/native';
 import WeeklyTimeTable from './WeeklyTimeTable';
+import Attendance from './Attendance';
+import Score from './Score';
+import Exam from './Exam';
 // interface MyProps {
 //   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
 // }
@@ -76,6 +79,12 @@ const handleItemClickAction = ({
       navigation.navigate('Notification');
     } else if (itemId === '2') {
       navigation.navigate('WeeklyTimeTable');
+    } else if (itemId === '3') {
+      navigation.navigate('Exam');
+    } else if (itemId === '4') {
+      navigation.navigate('Attendance');
+    } else if (itemId === '5') {
+      navigation.navigate('Score');
     } else {
       // Handle other item IDs or show an alert
       console.log('Item ID:', item.id);
@@ -164,6 +173,9 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
         />
         <Drawer.Screen name="Notification" component={Notification} />
         <Drawer.Screen name="WeeklyTimeTable" component={WeeklyTimeTable} />
+        <Drawer.Screen name="Attendance" component={Attendance} />
+        <Drawer.Screen name="Score" component={Score} />
+        <Drawer.Screen name="Exam" component={Exam} />
       </Drawer.Navigator>
       {/* <ButtonTab navigation={navigation} /> */}
     </SafeAreaView>

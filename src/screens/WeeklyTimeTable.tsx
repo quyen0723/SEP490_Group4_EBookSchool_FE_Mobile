@@ -1,4 +1,12 @@
-import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Animated,
+  Dimensions,
+} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {RootNavigationProps} from './types';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -7,6 +15,13 @@ import {Avatar, Card, useTheme} from 'react-native-paper';
 import {colors} from '../assets/css/colors';
 import {Theme} from '@react-navigation/native';
 import {studentWeeklyTimeTableDates} from '../mock/weeklyTimeTable';
+import {
+  Col,
+  ColProps,
+  Row,
+  Table,
+  TableWrapper,
+} from 'react-native-table-component';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
 }
@@ -15,12 +30,16 @@ type Item = {
   name: string;
   slotTime: string; // Thêm slotTime vào kiểu dữ liệu Item
   teacher: string;
-  height: number;
+  slot: string;
+  // height: number;
 };
 
 type Items = {
   [key: string]: Item[];
 };
+interface CustomColProps extends ColProps {
+  widthArr?: number[];
+}
 
 const timeToString = (time: number): string => {
   const date = new Date(time);
@@ -75,36 +94,33 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
             newItems[strTime] = [];
             const slots = getSlotsForDay(currentDate);
             if (slots) {
-              for (let j = 1; j <= 10; j++) {
-                const slot = slots[j - 1];
+              slots.forEach(slot => {
                 if (slot) {
                   newItems[strTime].push({
-                    // name: `Môn học: ${
-                    //   slot.subject
-                    // }\nGiáo viên: ${slot.teacher.trim()}`,
                     name: `Môn học: ${slot.subject}`,
                     slotTime: slot.slotTime,
                     teacher: `Giáo viên: ${slot.teacher}`,
-                    height: Math.max(50, Math.floor(Math.random() * 150)),
+                    slot: `${slot.slot}`,
+                    // height: Math.max(50, Math.floor(Math.random() * 150)),
                   });
                 } else {
                   newItems[strTime].push({
                     name: `Không có tiết học`,
                     slotTime: ``,
                     teacher: ``,
-                    height: Math.max(50, Math.floor(Math.random() * 150)),
+                    slot: ``,
+                    // height: Math.max(50, Math.floor(Math.random() * 150)),
                   });
                 }
-              }
+              });
             } else {
-              for (let j = 1; j <= 10; j++) {
-                newItems[strTime].push({
-                  name: `No data ${strTime} #${j}`,
-                  slotTime: ``,
-                  teacher: ``,
-                  height: Math.max(50, Math.floor(Math.random() * 150)),
-                });
-              }
+              newItems[strTime].push({
+                name: `Không có tiết học`,
+                slotTime: ``,
+                teacher: ``,
+                slot: ``,
+                // height: Math.max(50, Math.floor(Math.random() * 150)),
+              });
             }
           }
         } else {
@@ -116,7 +132,8 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
               name: `Không có tiết học`,
               slotTime: ``,
               teacher: ``,
-              height: Math.max(50, Math.floor(Math.random() * 150)),
+              slot: ``,
+              // height: Math.max(50, Math.floor(Math.random() * 150)),
             });
             // }
           }
@@ -159,88 +176,127 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
         return '';
     }
   };
-  const renderItem = (item: Item) => {
+  // const CustomCol: React.FC<CustomColProps> = ({widthArr, ...rest}) => {
+  //   return <Col {...rest} />;
+  // };
+  const renderItem = (item: Item, index: number) => {
+    const isFirstItemOfDay =
+      index === 0 ||
+      (index > 0 && Object.values(items)[index - 1]?.[0]?.slot !== item.slot);
+
+    // Kiểm tra xem item đang được render có phải là ngày đầu tiên của tuần không
+    const isFirstDayOfTheWeek =
+      index === 0 ||
+      Object.keys(items)[index] !== Object.keys(items)[index - 1];
+
+    const tableContainerHeight = item.name.startsWith(`Không có tiết học`)
+      ? 20
+      : 70;
+
     return (
-      <TouchableOpacity style={{marginRight: 10, marginTop: 17}}>
-        <Card>
-          <Card.Content>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
-              {item.name.startsWith(`Không có tiết học`) ? (
-                <Text>{item.name}</Text>
-              ) : (
-                <>
-                  <View style={{flex: 7}}>
-                    <Text
-                      style={{
-                        color: colors.warningColor,
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}>
-                      {item.name}
-                    </Text>
-                    <Text
-                      style={{
-                        color: colors.textColor,
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                        fontStyle: 'italic',
-                      }}>
-                      {item.teacher}
-                    </Text>
-                  </View>
-                  <View style={{flex: 3, alignItems: 'center'}}>
-                    <View
-                      style={{
-                        height: 20,
-                        width: 70,
-                        backgroundColor: 'green',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 20,
-                      }}>
+      <>
+        {/* Phân cách giữa các ngày */}
+        {isFirstDayOfTheWeek && (
+          <View
+            style={{
+              paddingTop: 50,
+              marginRight: 10,
+              borderBottomWidth: 2,
+              borderBottomColor: 'gray',
+              width: '20%',
+            }}
+          />
+        )}
+        {/* Nội dung của mỗi item */}
+        <TouchableOpacity
+          style={{
+            marginRight: 10,
+            marginTop: 17,
+            height: tableContainerHeight,
+          }}>
+          <Card>
+            <Card.Content>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                {item.name.startsWith(`Không có tiết học`) ? (
+                  <Text>{item.name}</Text>
+                ) : (
+                  <>
+                    <View style={{flex: 1}}>
+                      <Text>{item.slot}</Text>
+                    </View>
+                    <View style={{flex: 7}}>
                       <Text
                         style={{
-                          color: colors.whiteColor,
+                          color: colors.warningColor,
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                        }}>
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={{
+                          color: colors.textColor,
+                          fontSize: 16,
                           fontWeight: 'bold',
                           fontStyle: 'italic',
                         }}>
-                        Có mặt
+                        {item.teacher}
                       </Text>
                     </View>
-                    <View
-                      style={{
-                        height: 20,
-                        width: 90,
-                        backgroundColor: 'blue',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: 3,
-                        borderRadius: 5,
-                      }}>
-                      <Text
+                    <View style={{flex: 3, alignItems: 'center'}}>
+                      <View
                         style={{
-                          fontSize: 13,
-                          fontWeight: 'bold',
-                          color: colors.whiteColor,
+                          height: 20,
+                          width: 70,
+                          backgroundColor: 'green',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: 20,
                         }}>
-                        {item.slotTime}
-                      </Text>
+                        <Text
+                          style={{
+                            color: colors.whiteColor,
+                            fontWeight: 'bold',
+                            fontStyle: 'italic',
+                          }}>
+                          Có mặt
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          height: 20,
+                          width: 90,
+                          backgroundColor: 'blue',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          marginTop: 3,
+                          borderRadius: 5,
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 'bold',
+                            color: colors.whiteColor,
+                          }}>
+                          {item.slotTime}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </>
-              )}
-              {/* <Avatar.Text label="J" /> */}
-            </View>
-          </Card.Content>
-        </Card>
-      </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </Card.Content>
+          </Card>
+        </TouchableOpacity>
+      </>
     );
   };
+
   const renderHeader = (date: any) => {
     const month = date.month ? date.month : date.toString().split(' ')[1];
     const year = date.year ? date.year : date.toString().split(' ')[3];
@@ -382,6 +438,30 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
 export default WeeklyTimeTable;
 
 const styles = StyleSheet.create({
+  col: {
+    // Các thuộc tính style cho cột
+    justifyContent: 'center', // Canh giữa nội dung của cột
+    alignItems: 'center', // Canh giữa theo chiều dọc của cột
+  },
+  wrapper: {flexDirection: 'row'},
+  tableContainer: {
+    flex: 1,
+    padding: 5,
+    paddingTop: 30,
+    margin: 0,
+    // height: 80,
+  },
+  // Style cho row
+  row: {
+    flexDirection: 'row',
+    height: 40,
+    backgroundColor: colors.whiteColor,
+  },
+  // Style cho text trong row
+  text: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
   textSemester: {
     fontSize: 20,
     fontWeight: 'bold',

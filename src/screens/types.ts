@@ -9,6 +9,9 @@ export type RootNavigationProps = {
   Notification: undefined;
   NotificationDetail: undefined;
   WeeklyTimeTable: undefined;
+  Attendance: undefined;
+  Score: undefined;
+  Exam: undefined;
 };
 
 export interface User {
