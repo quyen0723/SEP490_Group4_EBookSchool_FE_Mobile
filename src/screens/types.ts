@@ -10,8 +10,14 @@ export type RootNavigationProps = {
   NotificationDetail: undefined;
   WeeklyTimeTable: undefined;
   Attendance: undefined;
-  Score: undefined;
+  ScoreMain: undefined;
+  ScoreFirstYear: undefined;
+  ScoreSecondYear: undefined;
+  ScoreThirdYear: undefined;
+  ScoreFourthYear: undefined;
   Exam: undefined;
+  ButtonTopTab: undefined;
+  DetailScoreFirstYearOne: undefined;
 };
 
 export interface User {

@@ -35,7 +35,7 @@ import Notification from './Notification';
 import {useNavigation} from '@react-navigation/native';
 import WeeklyTimeTable from './WeeklyTimeTable';
 import Attendance from './Attendance';
-import Score from './Score';
+import Score from './ScoreMain';
 import Exam from './Exam';
 // interface MyProps {
 //   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;

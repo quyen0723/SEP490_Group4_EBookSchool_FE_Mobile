@@ -421,105 +421,295 @@ const scoreByStudent: {
   code: number;
   status: boolean;
   message: string;
-  data: CustomScoreByStudentData;
+  data: CustomScoreByStudentData[];
 } = {
   code: 200,
   status: true,
   message: 'ok',
-  data: {
-    id: 1,
-    fullName: 'Nguyễn Lê Văn A',
-    average: 10,
-    study: 'Giỏi',
-    conduct: 'Tốt',
-    rank: 1,
-    class: '12A1',
-    note: 'Thông minh',
-    schoolYear: '2023-2024',
-    semester: 'Học kì 1',
-    scores: [
-      {
-        subject: 'Toán',
-        average: 10,
-        scoreDetail: [
-          {
-            key: 'Kiểm tra miệng',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra miệng',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 15 phút',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 15 phút',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 1 tiết',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra cuối kì',
-            value: 10,
-          },
-        ],
-      },
-      {
-        subject: 'Văn',
-        scoreDetail: [
-          {
-            key: 'Kiểm tra miệng',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra miệng',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra miệng',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 15 phút',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 1 tiết',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra cuối kì',
-            value: 10,
-          },
-        ],
-      },
-      {
-        subject: 'Anh',
-        scoreDetail: [
-          {
-            key: 'Kiểm tra miệng',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 15 phút',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra 1 tiết',
-            value: 10,
-          },
-          {
-            key: 'Kiểm tra cuối kì',
-            value: 10,
-          },
-        ],
-      },
-    ],
-  },
+  data: [
+    {
+      id: 1,
+      fullName: 'Nguyễn Lê Văn A',
+      average: 10,
+      study: 'Giỏi',
+      conduct: 'Tốt',
+      rank: 1,
+      class: '12A1',
+      note: 'Thông minh',
+      schoolYear: '2023-2024',
+      semester: 'Học kì 1',
+      scores: [
+        {
+          subject: 'Toán',
+          average: 10,
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 10,
+            },
+          ],
+        },
+        {
+          subject: 'Văn',
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 10,
+            },
+          ],
+        },
+        {
+          subject: 'Anh',
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 10,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 10,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 2,
+      fullName: 'Nguyễn Lê Văn A',
+      average: 9.5,
+      study: 'Giỏi',
+      conduct: 'Tốt',
+      rank: 1,
+      class: '12A1',
+      note: 'Thông minh',
+      schoolYear: '2023-2024',
+      semester: 'Học kì 2',
+      scores: [
+        {
+          subject: 'Toán',
+          average: 9.5,
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 9.5,
+            },
+          ],
+        },
+        {
+          subject: 'Văn',
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 9.5,
+            },
+          ],
+        },
+        {
+          subject: 'Anh',
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 9.5,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 9.5,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 3,
+      fullName: 'Nguyễn Lê Văn A',
+      average: 9.75,
+      study: 'Giỏi',
+      conduct: 'Tốt',
+      rank: 1,
+      class: '12A1',
+      note: 'Thông minh',
+      schoolYear: '2023-2024',
+      semester: 'Cả năm',
+      scores: [
+        {
+          subject: 'Toán',
+          average: 9.75,
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 9.75,
+            },
+          ],
+        },
+        {
+          subject: 'Văn',
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 9.75,
+            },
+          ],
+        },
+        {
+          subject: 'Anh',
+          scoreDetail: [
+            {
+              key: 'Kiểm tra miệng',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 15 phút',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra 1 tiết',
+              value: 9.75,
+            },
+            {
+              key: 'Kiểm tra cuối kì',
+              value: 9.75,
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // Điểm 1 môn của 1 đứa

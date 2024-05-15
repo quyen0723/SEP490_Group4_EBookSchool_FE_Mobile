@@ -70,7 +70,7 @@ const Notification = ({navigation}: MyProps) => {
     const data = await res.json();
     setNotifications(data);
     setFilteredNotifications(data);
-    console.log(data);
+    // console.log(data);
   };
 
   const filterItemName = (text: string) => {

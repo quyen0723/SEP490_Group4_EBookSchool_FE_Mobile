@@ -12,8 +12,11 @@ import Notification from '../screens/Notification';
 import NotificationDetail from '../screens/NotificationDetail';
 import WeeklyTimeTable from '../screens/WeeklyTimeTable';
 import Attendance from '../screens/Attendance';
-import Score from '../screens/Score';
+import Score from '../screens/ScoreMain';
 import Exam from '../screens/Exam';
+import ButtonTopTab from './ButtonTopTab';
+import ScoreMain from '../screens/ScoreMain';
+import DetailScoreFirstYearOne from '../screens/DetailScoreFirstYearOne';
 
 const Stack = createStackNavigator<RootNavigationProps>();
 
@@ -36,6 +39,11 @@ const AppNavigator = () => {
           component={ButtonTab}
           options={{headerShown: false}}
         />
+        {/* <Stack.Screen
+          name="ButtonTopTab"
+          component={ButtonTopTab}
+          options={{headerShown: false}}
+        /> */}
         <Stack.Screen
           name="Profile"
           component={Profile} // Add the Profile component as a screen
@@ -62,13 +70,18 @@ const AppNavigator = () => {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="Score"
-          component={Score} // Add the Profile component as a screen
+          name="ScoreMain"
+          component={ScoreMain} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
         <Stack.Screen
           name="Exam"
           component={Exam} // Add the Profile component as a screen
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="DetailScoreFirstYearOne"
+          component={DetailScoreFirstYearOne} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
       </Stack.Navigator>
