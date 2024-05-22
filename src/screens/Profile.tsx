@@ -1,28 +1,59 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, Image, StyleSheet} from 'react-native';
+import {View, Text, Image, StyleSheet, ActivityIndicator} from 'react-native';
 import {User} from './types';
 import {colors} from '../assets/css/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Profile = ({route}: any) => {
   const {userId} = route.params;
-  console.log(userId);
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  console.log(userId);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const accessToken = await AsyncStorage.getItem('accessToken');
         const res = await fetch(
-          `https://662e5424a7dda1fa378caa6a.mockapi.io/login/${userId}`,
+          `http://172.29.48.1:1001/api/Students/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
         );
-        const userData = await res.json();
-        setUser(userData);
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.data);
+        } else {
+          setError(data.message);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setError('An error occurred while fetching user data');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUser();
   }, [userId]);
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   if (!user) {
     return (
@@ -59,9 +90,9 @@ const Profile = ({route}: any) => {
           </View>
 
           <View style={styles.userInfoTextContainer}>
-            <Text style={styles.userInfoMainText}>{user.name}</Text>
+            <Text style={styles.userInfoMainText}>{user.fullname}</Text>
             <Text style={styles.userInfoSubText}>
-              {user._id} - Trạng thái: {user.status}
+              {user.id} - Trạng thái: {user.id}
             </Text>
             <Text style={styles.userInfoSubText}>{user.email}</Text>
           </View>
@@ -74,11 +105,11 @@ const Profile = ({route}: any) => {
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Ngày sinh: </Text>
-            {user.dateofbirth}
+            {user.birthday}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Nơi sinh: </Text>
-            {user.placeofbirth}
+            {user.birthplace}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Dân tộc: </Text>
@@ -86,11 +117,11 @@ const Profile = ({route}: any) => {
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Chỗ ở hiện tại: </Text>
-            {user.currentresidence}
+            {user.homeTown}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Con liệt sĩ, thương binh: </Text>
-            {user.martyrson}
+            {user.isMartyrs}
           </Text>
           {/* <View style={styles.userInfoRow}>
             <Text style={styles.userInfoText}>
@@ -105,27 +136,27 @@ const Profile = ({route}: any) => {
 
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Họ tên cha: </Text>
-            {user.namefather}
+            {user.fatherFullName}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Nghề nghiệp: </Text>
-            {user.occupationfather}
+            {user.fatherProfession}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Số điện thoại cha: </Text>
-            {user.phonefather}
+            {user.fatherPhone}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Họ tên mẹ: </Text>
-            {user.namemother}
+            {user.motherFullName}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Nghề nghiệp: </Text>
-            {user.occupationmother}
+            {user.motherProfession}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Số điện thoại mẹ: </Text>
-            {user.phonemother}
+            {user.motherPhone}
           </Text>
 
           <Text style={styles.userInfoText}>
@@ -208,5 +239,19 @@ const styles = StyleSheet.create({
   styleText: {
     fontWeight: 'bold',
     color: 'black',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
   },
 });

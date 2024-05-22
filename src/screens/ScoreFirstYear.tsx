@@ -34,7 +34,8 @@ const ScoreFirstYear = ({navigation}: MyProps) => {
     return semesters.map(semesterData => (
       <TouchableOpacityComponent
         key={semesterData.id}
-        imageSource={require('../assets/images/icons/Calendar.png')}
+        // imageSource={semesterData.average}
+        imageSource={semesterData.average}
         title={semesterData.semester}
         startDate={getStartDate(semesterData.schoolYear)}
         endDate={getEndDate(semesterData.schoolYear)}

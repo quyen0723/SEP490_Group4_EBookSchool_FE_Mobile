@@ -435,7 +435,7 @@ const scoreByStudent: {
       conduct: 'Tốt',
       rank: 1,
       class: '12A1',
-      note: 'Thông minh',
+      note: 'Thông minh, chăm chỉ, xứng đáng có 10 người yêu',
       schoolYear: '2023-2024',
       semester: 'Học kì 1',
       scores: [

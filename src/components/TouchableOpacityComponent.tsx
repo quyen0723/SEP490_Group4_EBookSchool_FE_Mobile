@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ImageSourcePropType,
 } from 'react-native';
+import CircularProgressComponent from './CircularProgressComponent';
 
 interface TouchableOpacityComponentProps {
   imageSource: ImageSourcePropType;
@@ -32,7 +33,9 @@ const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
   return (
     <TouchableOpacity style={styles.touchable} onPress={onPress}>
       <View style={styles.imageContainer}>
-        <Image source={imageSource} style={styles.image} />
+        <View style={{width: 20, height: 20}}>
+          <CircularProgressComponent value={tbcm * 10} />
+        </View>
       </View>
       <View style={styles.textContainer}>
         <Text style={[styles.text, {fontWeight: 'bold'}]}>{title}</Text>

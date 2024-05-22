@@ -148,7 +148,7 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
       <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
       {/* <View style={styles.header}> */}
       <Drawer.Navigator
-        initialRouteName="E-School"
+        // initialRouteName="E-School"
         screenOptions={{
           headerTitleAlign: 'center',
           headerStyle: {

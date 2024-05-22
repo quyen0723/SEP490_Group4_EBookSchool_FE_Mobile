@@ -4,7 +4,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RootNavigationProps} from './types';
 
 interface MyProps {
-  navigation: StackNavigationProp<RootNavigationProps, 'Attendance'>;
+  navigation: StackNavigationProp<RootNavigationProps, 'ScoreSecondYear'>;
 }
 const ScoreSecondYear = ({navigation}: MyProps) => {
   return (

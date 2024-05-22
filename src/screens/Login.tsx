@@ -1,10 +1,11 @@
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
 import React, {useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {TextInput} from 'react-native-gesture-handler';
 import Loader from '../components/Loader';
 import {colors} from '../assets/css/colors';
 import {RootNavigationProps} from './types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
   _id: string; // Add _id field
@@ -17,73 +18,71 @@ interface MyProps {
 }
 
 const Login = ({navigation}: MyProps) => {
-  const [email, setEmail] = useState<string>('Quyennnmce161096@fpt.edu.vn');
-  const [password, setPassword] = useState<string>('Password 1');
+  const [username, setUsername] = useState<string>('STUDENTLVHS0021');
+  const [password, setPassword] = useState<string>('aA@123');
   const [data, setData] = useState<[]>();
   const [badEmail, setBadEmail] = useState<boolean>(false);
   const [badPassword, setBadPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  const validate = () => {
-    let valid = true;
+  // const validate = () => {
+  //   let valid = true;
 
-    if (email == '') {
-      setBadEmail(true);
-      valid = false;
-    } else if (email != '') {
-      setBadEmail(false);
-    }
-    if (password == '') {
-      setBadPassword(true);
-      valid = false;
-    } else if (password != '') {
-      setBadPassword(false);
-    }
+  //   if (email == '') {
+  //     setBadEmail(true);
+  //     valid = false;
+  //   } else if (email != '') {
+  //     setBadEmail(false);
+  //   }
+  //   if (password == '') {
+  //     setBadPassword(true);
+  //     valid = false;
+  //   } else if (password != '') {
+  //     setBadPassword(false);
+  //   }
 
-    return valid;
-  };
+  //   return valid;
+  // };
 
   const login = async () => {
-    if (!validate()) {
-      return; // Không gửi request nếu validation không hợp lệ
-    }
+    // if (!validate()) {
+    //   return;
+    // }
 
     setLoading(true);
 
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
-
-    const body = {email, password};
-
     try {
-      const res = await fetch(
-        `https://662e5424a7dda1fa378caa6a.mockapi.io/login`,
-        {
-          headers,
-          method: 'GET',
-          //   body: JSON.stringify(body),
+      const response = await fetch('http://172.29.48.1:1001/api/Auth/Login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({username, password}),
+      });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      const user = data.find(
-        (userData: any) =>
-          userData.email === email && userData.password === password,
-      );
-
-      if (user) {
-        setLoading(false);
-        // navigation.navigate('HomeMain', {id: user._id});
-        navigation.navigate('HomeMain', {userId: user._id});
-        // setData(user);
-        // console.log(user._id);
+      if (response.ok && data.success) {
+        // Save access token to AsyncStorage
+        await AsyncStorage.setItem('accessToken', data.data.accessToken);
+        await AsyncStorage.setItem(
+          'permissions',
+          JSON.stringify(data.data.permissions),
+        );
+        // Navigate to HomeMain screen
+        navigation.navigate('HomeMain', {userId: data.data.user.id});
       } else {
-        throw new Error('Invalid email or password');
+        console.error('Login failed', data);
+        Alert.alert(
+          'Login Failed',
+          data.message || 'Invalid username or password',
+        );
       }
     } catch (error) {
-      setError('Invalid email or password');
+      console.error('Error logging in', error);
+      Alert.alert('Error', 'An error occurred while logging in');
+    } finally {
       setLoading(false);
     }
   };
@@ -91,30 +90,32 @@ const Login = ({navigation}: MyProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Đăng nhập</Text>
-      <Text style={styles.textLabel}>Email:</Text>
+      <Text style={styles.textLabel}>Tên tài khoản:</Text>
       <TextInput
-        value={email}
-        onChangeText={txt => setEmail(txt)}
+        value={username}
+        onChangeText={txt => setUsername(txt)}
         style={styles.input}
       />
-      {badEmail && <Text style={styles.errorText}>Please Enter Email</Text>}
+      {/* {badEmail && <Text style={styles.errorText}>Please Enter Email</Text>} */}
       <Text style={styles.textLabel}>Mật khẩu:</Text>
       <TextInput
         value={password}
         onChangeText={txt => setPassword(txt)}
+        secureTextEntry={true}
         style={styles.input}
       />
-      {badPassword && (
+      {/* {badPassword && (
         <Text style={styles.errorText}>Please Enter Password</Text>
       )}
-      {error !== '' && <Text style={styles.errorText}>{error}</Text>}
+      {error !== '' && <Text style={styles.errorText}>{error}</Text>} */}
       <Text style={styles.textForgot}>Quên mật khẩu?</Text>
       <TouchableOpacity
         style={styles.loginBtn}
         onPress={() => {
-          if (validate()) {
-            login();
-          }
+          // if (validate()) {
+          //   login();
+          // }
+          login();
         }}>
         <Text style={styles.btnText}>Đăng nhập</Text>
       </TouchableOpacity>

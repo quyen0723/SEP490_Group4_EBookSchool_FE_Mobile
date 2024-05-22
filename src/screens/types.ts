@@ -21,22 +21,22 @@ export type RootNavigationProps = {
 };
 
 export interface User {
-  name: string;
+  fullname: string;
   email: string;
   gender: string;
-  dateofbirth: string;
-  placeofbirth: string;
+  birthday: string;
+  birthplace: string;
   nation: string;
-  currentresidence: string;
-  martyrson: string;
-  namefather: string;
-  namemother: string;
-  occupationfather: string;
-  occupationmother: string;
+  homeTown: string;
+  fatherFullName: string;
+  motherFullName: string;
+  fatherProfession: string;
+  motherProfession: string;
   nameGuardian: string;
   status: string;
   occipationguardian: string;
-  phonemother: string;
-  phonefather: string;
-  _id: string;
+  motherPhone: string;
+  fatherPhone: string;
+  id: string;
+  isMartyrs: boolean;
 }
