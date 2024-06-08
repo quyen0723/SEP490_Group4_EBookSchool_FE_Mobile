@@ -17,6 +17,8 @@ import Exam from '../screens/Exam';
 import ButtonTopTab from './ButtonTopTab';
 import ScoreMain from '../screens/ScoreMain';
 import DetailScoreFirstYearOne from '../screens/DetailScoreFirstYearOne';
+import DetailAttendanceFirst from '../screens/DetailAttendanceFirst';
+import DetailAttendanceSubject from '../screens/DetailAttendanceSubject';
 
 const Stack = createStackNavigator<RootNavigationProps>();
 
@@ -82,6 +84,16 @@ const AppNavigator = () => {
         <Stack.Screen
           name="DetailScoreFirstYearOne"
           component={DetailScoreFirstYearOne} // Add the Profile component as a screen
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="DetailAttendanceFirst"
+          component={DetailAttendanceFirst} // Add the Profile component as a screen
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="DetailAttendanceSubject"
+          component={DetailAttendanceSubject} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
       </Stack.Navigator>

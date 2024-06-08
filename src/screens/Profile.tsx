@@ -15,14 +15,11 @@ const Profile = ({route}: any) => {
     const fetchUser = async () => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
-        const res = await fetch(
-          `http://172.29.48.1:1001/api/Students/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+        const res = await fetch(`https://orbapi.click/api/Students/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
           },
-        );
+        });
         const data = await res.json();
         if (data.success) {
           setUser(data.data);
@@ -159,14 +156,14 @@ const Profile = ({route}: any) => {
             {user.motherPhone}
           </Text>
 
-          <Text style={styles.userInfoText}>
+          {/* <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Họ tên người giám hộ: </Text>
             {user.nameGuardian}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Nghề nghiệp: </Text>
             {user.occipationguardian}
-          </Text>
+          </Text> */}
 
           {/* <Text style={styles.userInfoText}>
             <Text style={styles.styleText}></Text>

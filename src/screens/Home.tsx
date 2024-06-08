@@ -60,6 +60,7 @@ const renderFlatList = ({
       keyExtractor={item => item.id.toString()}
       numColumns={item.data.length === 1 ? 1 : 2}
       contentContainerStyle={styles.contentContainerStyle}
+      horizontal={item.data.length === 1}
     />
   </>
 );

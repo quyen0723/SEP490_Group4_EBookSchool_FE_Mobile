@@ -8,6 +8,7 @@ import ScoreThirdYear from './ScoreThirdYear';
 import ScoreFourthYear from './ScoreFourthYear';
 import ScoreSecondYear from './ScoreSecondYear';
 import ScoreFirstYear from './ScoreFirstYear';
+import AttendanceFirstYear from './AttendanceFirstYear';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -63,13 +64,13 @@ const Attendance = ({navigation}: MyProps) => {
           tabBarInactiveTintColor: 'black', // Màu của tab không được chọn
         }}>
         <Tab.Screen
-          name="ScoreFirstYear"
-          component={ScoreFirstYear}
+          name="AttendanceFirstYear"
+          component={AttendanceFirstYear}
           options={{
             tabBarLabel: ({focused}) => (
               <View style={[styles.tabItem, focused && styles.tabItemFocused]}>
                 <Text style={{color: focused ? 'white' : 'black'}}>
-                  First Year
+                  Điểm danh 1
                 </Text>
               </View>
             ),

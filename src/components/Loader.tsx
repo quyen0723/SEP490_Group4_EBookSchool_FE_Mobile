@@ -1,5 +1,6 @@
 import {View, Text, Modal, ActivityIndicator} from 'react-native';
 import React from 'react';
+import {colors} from '../assets/css/colors';
 
 interface LoaderProps {
   visible: boolean;
@@ -22,9 +23,9 @@ const Loader = ({visible}: LoaderProps) => {
             borderRadius: 10,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'white',
+            // backgroundColor: 'white',
           }}>
-          <ActivityIndicator size={'large'} color={'black'} />
+          <ActivityIndicator size={'large'} color={colors.primaryColor} />
         </View>
       </View>
     </Modal>

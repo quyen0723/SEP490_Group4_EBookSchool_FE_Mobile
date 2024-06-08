@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import {colors} from '../assets/css/colors';
 import RenderHTML from 'react-native-render-html';
+import {notification} from '../mock/notification';
 
-const NotificationDetail = ({route, navigation}) => {
+const DetailAttendanceSubject = ({route, navigation}) => {
   // Extract the notification object from the route parameters
-  const {notification} = route.params;
+  const {title} = route.params;
 
   return (
     <View style={styles.main}>
@@ -25,16 +26,16 @@ const NotificationDetail = ({route, navigation}) => {
             source={require('../assets/images/icons/Back.png')}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chi tiết thông báo</Text>
+        <Text style={styles.headerTitle}>Chi tiết điểm danh</Text>
         <View style={{flex: 1}} />
       </View>
       {/* Content */}
       <View style={styles.container}>
-        <Text style={styles.textTitle}>{notification.title}</Text>
+        <Text style={styles.textTitle}>{title}</Text>
         <View style={styles.notificationDetails}>
-          <Text style={styles.textNofi}>Ngày tạo: {notification.createAt}</Text>
+          {/* <Text style={styles.textNofi}>Ngày tạo: {notification.createAt}</Text> */}
           <Text style={[styles.textNofi, {paddingLeft: 10}]}>
-            Ngày cập nhập: {notification.updateAt}
+            {/* Ngày cập nhập: {notification.updateAt} */}
           </Text>
         </View>
 
@@ -51,7 +52,7 @@ const NotificationDetail = ({route, navigation}) => {
   );
 };
 
-export default NotificationDetail;
+export default DetailAttendanceSubject;
 
 const styles = StyleSheet.create({
   imge: {

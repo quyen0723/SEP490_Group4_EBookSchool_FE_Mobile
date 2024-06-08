@@ -15,19 +15,19 @@ interface TouchableOpacityComponentProps {
   startDate: string;
   endDate: string;
   tbcm: number;
-  hanhKiem: any;
-  rank: number;
+  present: number; // Thêm trường present
+  absent: number; // Thêm trường absent
   onPress: () => void;
 }
 
-const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
+const TouchableOpacityAttendance: React.FC<TouchableOpacityComponentProps> = ({
   imageSource,
   title,
   startDate,
   endDate,
   tbcm,
-  hanhKiem,
-  rank,
+  present, // Thay vì hanhKiem
+  absent, // Thay vì rank
   onPress,
 }) => {
   return (
@@ -42,17 +42,17 @@ const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
         <Text style={styles.text}>Ngày bắt đầu: {startDate}</Text>
         <Text style={styles.text}>Ngày kết thúc: {endDate}</Text>
         <View style={styles.row}>
-          <Text style={styles.text}>
+          {/* <Text style={styles.text}>
             <Text style={[styles.text, {fontWeight: 'bold'}]}>TBCM: </Text>
             {tbcm}
+          </Text> */}
+          <Text style={styles.text}>
+            <Text style={[styles.text, {fontWeight: 'bold'}]}>Có mặt: </Text>
+            {present}
           </Text>
           <Text style={styles.text}>
-            <Text style={[styles.text, {fontWeight: 'bold'}]}>Hạnh kiểm: </Text>
-            {hanhKiem}
-          </Text>
-          <Text style={styles.text}>
-            <Text style={[styles.text, {fontWeight: 'bold'}]}>Hạng: </Text>
-            {rank}
+            <Text style={[styles.text, {fontWeight: 'bold'}]}>Vắng: </Text>
+            {absent}
           </Text>
         </View>
       </View>
@@ -60,7 +60,7 @@ const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
   );
 };
 
-export default TouchableOpacityComponent;
+export default TouchableOpacityAttendance;
 
 const styles = StyleSheet.create({
   touchable: {

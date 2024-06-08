@@ -6,6 +6,7 @@ import Loader from '../components/Loader';
 import {colors} from '../assets/css/colors';
 import {RootNavigationProps} from './types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RouteProp} from '@react-navigation/native';
 
 interface User {
   _id: string; // Add _id field
@@ -15,10 +16,11 @@ interface User {
 }
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'Login'>;
+  route: RouteProp<RootNavigationProps, 'Login'>;
 }
 
 const Login = ({navigation}: MyProps) => {
-  const [username, setUsername] = useState<string>('STUDENTLVHS0021');
+  const [username, setUsername] = useState<string>('STUDENTLVHS0001');
   const [password, setPassword] = useState<string>('aA@123');
   const [data, setData] = useState<[]>();
   const [badEmail, setBadEmail] = useState<boolean>(false);
@@ -53,7 +55,7 @@ const Login = ({navigation}: MyProps) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://172.29.48.1:1001/api/Auth/Login', {
+      const response = await fetch('https://orbapi.click/api/Auth/Login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +73,10 @@ const Login = ({navigation}: MyProps) => {
           JSON.stringify(data.data.permissions),
         );
         // Navigate to HomeMain screen
+        await AsyncStorage.setItem('userId', data.data.user.id);
+        console.log('Navigating to HomeMain with userId:', data.data.user.id);
         navigation.navigate('HomeMain', {userId: data.data.user.id});
+        // navigation.navigate('HomeMain');
       } else {
         console.error('Login failed', data);
         Alert.alert(

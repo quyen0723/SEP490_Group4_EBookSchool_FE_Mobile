@@ -14,7 +14,7 @@ const Tab = createMaterialTopTabNavigator();
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'ScoreMain'>;
-  route: any; // hoặc kiểu dữ liệu cụ thể của route
+  route: any;
 }
 
 const ScoreMain = ({navigation, route}: MyProps) => {
@@ -70,7 +70,7 @@ const ScoreMain = ({navigation, route}: MyProps) => {
             tabBarLabel: ({focused}) => (
               <View style={[styles.tabItem, focused && styles.tabItemFocused]}>
                 <Text style={{color: focused ? 'white' : 'black'}}>
-                  First Year
+                  2023 - 2024
                 </Text>
               </View>
             ),

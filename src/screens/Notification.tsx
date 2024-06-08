@@ -14,16 +14,19 @@ import {RootNavigationProps} from './types';
 import {colors} from '../assets/css/colors';
 import {ItemType} from '../components/Data';
 import {useIsFocused} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'Notification'>;
 }
 type Notes = {
   title: string;
-  description: string;
+  content: string;
   id: string;
-  date: string;
-  time: string;
+  createAt: string;
+  createBy: string;
+  updateAt: string;
+  thumbnail: string;
 };
 const Notification = ({navigation}: MyProps) => {
   const [notifications, setNotifications] = useState<Notes[]>([]);
@@ -43,7 +46,7 @@ const Notification = ({navigation}: MyProps) => {
 
   useEffect(() => {
     navigation.setOptions({
-      title: 'Notification',
+      title: 'Thông báo',
       headerLeft: () => (
         // <Button onPress={() => navigation.goBack()} title="Go Back" />
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -57,20 +60,43 @@ const Notification = ({navigation}: MyProps) => {
   }, [navigation]);
 
   const getNotes = async () => {
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
-    const res = await fetch(
-      'https://66390e0c4253a866a25025ec.mockapi.io/notification',
-      {
-        headers: headers,
-        method: 'GET',
-      },
-    );
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
 
-    const data = await res.json();
-    setNotifications(data);
-    setFilteredNotifications(data);
-    // console.log(data);
+      if (!accessToken) {
+        console.error('Access token not found in AsyncStorage');
+        return;
+      }
+
+      const headers = new Headers();
+      headers.append('Authorization', `Bearer ${accessToken}`);
+      headers.append('Content-Type', 'application/json');
+
+      const response = await fetch('https://orbapi.click/api/Notifications', {
+        headers,
+        method: 'GET',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const notificationsData = data.data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          thumbnail: item.thumbnail,
+          createBy: item.createBy,
+          createAt: item.createAt,
+          updateAt: item.updateAt,
+        }));
+        setNotifications(notificationsData);
+        setFilteredNotifications(notificationsData);
+      } else {
+        console.error('Error fetching notifications:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
   };
 
   const filterItemName = (text: string) => {
@@ -84,6 +110,7 @@ const Notification = ({navigation}: MyProps) => {
       setFilteredNotifications(filtered);
     }
   };
+
   return (
     <View>
       <View
@@ -140,7 +167,7 @@ const Notification = ({navigation}: MyProps) => {
                   <View>
                     <Text style={styles.notificationTitle}>{item.title}</Text>
                     <Text style={styles.notificationsDate}>
-                      Date: {item.date}
+                      Date: {item.createAt}
                     </Text>
                   </View>
                 </View>
