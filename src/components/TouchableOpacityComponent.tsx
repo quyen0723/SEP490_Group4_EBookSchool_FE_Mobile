@@ -8,51 +8,63 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import CircularProgressComponent from './CircularProgressComponent';
+import {colors} from '../assets/css/colors';
+import {blue400} from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
 interface TouchableOpacityComponentProps {
   imageSource: ImageSourcePropType;
-  title: string;
-  startDate: string;
-  endDate: string;
-  tbcm: number;
-  hanhKiem: any;
-  rank: number;
+  subject: string;
+  semester1Average: number;
+  semester2Average: number;
+  yearAverage: number;
   onPress: () => void;
 }
 
 const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
   imageSource,
-  title,
-  startDate,
-  endDate,
-  tbcm,
-  hanhKiem,
-  rank,
+  subject,
+  semester1Average,
+  semester2Average,
+  yearAverage,
   onPress,
 }) => {
   return (
     <TouchableOpacity style={styles.touchable} onPress={onPress}>
       <View style={styles.imageContainer}>
         <View style={{width: 20, height: 20}}>
-          <CircularProgressComponent value={tbcm} />
+          <CircularProgressComponent value={yearAverage * 10} />
         </View>
       </View>
       <View style={styles.textContainer}>
-        <Text style={[styles.text, {fontWeight: 'bold'}]}>{title}</Text>
-        <Text style={styles.text}>Ngày bắt đầu: {startDate}</Text>
-        <Text style={styles.text}>Ngày kết thúc: {endDate}</Text>
+        <Text
+          style={[
+            styles.text,
+            {fontWeight: 'bold', fontSize: 18, color: colors.warningColor},
+          ]}>
+          {subject}
+        </Text>
         <View style={styles.row}>
           <Text style={styles.text}>
-            <Text style={[styles.text, {fontWeight: 'bold'}]}>TBCM: </Text>
-            {tbcm}
+            <Text style={[styles.text, {fontWeight: 'bold'}]}>Học kỳ I: </Text>
+            {semester1Average}
           </Text>
+        </View>
+        <View style={styles.row}>
           <Text style={styles.text}>
-            <Text style={[styles.text, {fontWeight: 'bold'}]}>Hạnh kiểm: </Text>
-            {hanhKiem}
+            <Text style={[styles.text, {fontWeight: 'bold'}]}>Học kỳ II: </Text>
+            {semester2Average}
           </Text>
-          <Text style={styles.text}>
-            <Text style={[styles.text, {fontWeight: 'bold'}]}>Hạng: </Text>
-            {rank}
+          <Text
+            style={[
+              styles.text,
+              {
+                paddingRight: 10,
+                color: colors.primaryColor,
+                fontWeight: 'bold',
+              },
+            ]}>
+            <Text style={[styles.text, {fontWeight: 'bold'}]}>Cả năm: </Text>
+            {yearAverage}
           </Text>
         </View>
       </View>
@@ -74,6 +86,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: {width: 0, height: 2},
     elevation: 3,
+    marginVertical: 10,
   },
   imageContainer: {
     width: '25%',

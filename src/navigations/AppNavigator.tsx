@@ -19,6 +19,7 @@ import ScoreMain from '../screens/ScoreMain';
 import DetailScoreFirstYearOne from '../screens/DetailScoreFirstYearOne';
 import DetailAttendanceFirst from '../screens/DetailAttendanceFirst';
 import DetailAttendanceSubject from '../screens/DetailAttendanceSubject';
+import WeeklyTimeTableMain from '../screens/WeeklyTimeTableMain';
 
 const Stack = createStackNavigator<RootNavigationProps>();
 
@@ -64,6 +65,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="WeeklyTimeTable"
           component={WeeklyTimeTable} // Add the Profile component as a screen
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="WeeklyTimeTableMain"
+          component={WeeklyTimeTableMain} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
         <Stack.Screen

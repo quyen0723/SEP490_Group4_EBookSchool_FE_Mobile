@@ -7,13 +7,13 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {RootNavigationProps, TimeTableData} from './types';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Avatar, Card, useTheme} from 'react-native-paper';
 import {colors} from '../assets/css/colors';
-import {Theme} from '@react-navigation/native';
+import {RouteProp, Theme} from '@react-navigation/native';
 import {studentWeeklyTimeTableDates} from '../mock/weeklyTimeTable';
 import {
   Col,
@@ -23,8 +23,10 @@ import {
   TableWrapper,
 } from 'react-native-table-component';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MemoizedCard from '../components/MemoizedCard';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
+  route: RouteProp<{params: {year: string; semesterId: number}}, 'params'>;
 }
 
 type Item = {
@@ -58,6 +60,15 @@ const getMondayOfWeek = (date: Date): Date => {
   return monday;
 };
 
+const getMondayOfCurrentWeek = (): Date => {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const distanceToMonday = (dayOfWeek + 6) % 7; // Calculate distance to Monday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - distanceToMonday);
+  return monday;
+};
+
 const getFormattedMondayOfWeek = (date: Date): string => {
   return getFormattedDate(getMondayOfWeek(date));
 };
@@ -67,45 +78,40 @@ const formattedMondayOfCurrentWeek: string = getFormattedMondayOfWeek(
 );
 
 console.log(formattedMondayOfCurrentWeek);
+
 const timeToString = (time: number): string => {
   const date = new Date(time);
   return date.toISOString().split('T')[0];
 };
 
-const WeeklyTimeTable = ({navigation}: MyProps) => {
-  const [monday, setMonday] = useState(formattedMondayOfCurrentWeek);
+const WeeklyTimeTable = ({navigation, route}: MyProps) => {
+  // const [monday, setMonday] = useState(getFormattedMondayOfWeek(new Date()));
+  const {year} = route.params;
+  const [monday, setMonday] = useState(
+    getFormattedDate(getMondayOfCurrentWeek()),
+  );
+  const [selectedDate, setSelectedDate] = useState(
+    timeToString(getMondayOfCurrentWeek().getTime()),
+  );
   const [weeklyTimeTable, setWeeklyTimeTable] = useState<TimeTableData | null>(
     null,
   );
   const [fromDatee, setFromDatee] = useState<string | null>();
   const [toDatee, setToDatee] = useState<string | null>();
+  const [classData, setClassData] = useState<string | null>();
   const [userId, setUserId] = useState<string | null>(null);
   const [items, setItems] = useState<Items>({});
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(getMondayOfCurrentWeek());
   const agendaRef = useRef(null);
   // const [items, setItems] = useState<Items>({});
   // const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  useEffect(() => {
-    navigation.setOptions({
-      title: 'Thời khóa biểu',
-      headerLeft: () => (
-        // <Button onPress={() => navigation.goBack()} title="Go Back" />
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            style={styles.imge}
-            source={require('../assets/images/icons/Back.png')}
-          />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-  useEffect(() => {
-    const fetchTimeTable = async (userId: string) => {
+  const fetchTimeTable = useCallback(
+    async (userId: string) => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         const response = await fetch(
-          `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=2023-2024&fromDate=${monday}`,
+          `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -114,27 +120,29 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
         );
         const timeTableData = await response.json();
         console.log('Time table data:', timeTableData);
-        if (timeTableData.success) {
-          const processedItems = processTimeTableData(timeTableData.data);
-          setWeeklyTimeTable(timeTableData.data);
+        if (timeTableData) {
+          const processedItems = processTimeTableData(timeTableData);
+          setWeeklyTimeTable(timeTableData);
           setItems(processedItems);
-          setFromDatee(timeTableData.data.fromDate);
-          setToDatee(timeTableData.data.toDate);
+          setFromDatee(timeTableData.fromDate);
+          setToDatee(timeTableData.toDate);
+          setClassData(timeTableData.class);
         } else {
           // setError(timeTableData.message);
         }
-        // processTimeTableData(timeTableData);
       } catch (error) {
         console.error('Error fetching timetable data', error);
       }
-    };
+    },
+    [monday],
+  );
 
+  useEffect(() => {
     const fetchUserId = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId) {
           setUserId(storedUserId);
-          // console.log('User ID fetched from AsyncStorage:', storedUserId);
           fetchTimeTable(storedUserId);
         } else {
           console.error('No user ID found in AsyncStorage');
@@ -145,49 +153,61 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
     };
 
     fetchUserId();
-  }, [monday]);
+  }, [fetchTimeTable]);
 
-  const processTimeTableData = (
-    timeTableData: TimeTableData['data'],
-  ): Items => {
-    const newItems: Items = {};
+  // useEffect(() => {
+  //   navigation.setOptions({
+  //     title: 'Thời khóa biểu',
+  //     headerLeft: () => (
+  //       <TouchableOpacity onPress={() => navigation.goBack()}>
+  //         <Image
+  //           style={styles.imge}
+  //           source={require('../assets/images/icons/Back.png')}
+  //         />
+  //       </TouchableOpacity>
+  //     ),
+  //   });
+  // }, [navigation]);
 
-    if (timeTableData.details) {
-      timeTableData.details.forEach(detail => {
-        const date = convertDateFormat(detail.date);
-        const filteredSlots = detail.slots.filter(
-          slot =>
-            slot.subject !== '' &&
-            slot.teacher !== '' &&
-            slot.status !== '' &&
-            slot.slotTime !== '',
-        );
+  const processTimeTableData = useCallback(
+    (timeTableData: TimeTableData['data']): Items => {
+      const newItems: Items = {};
+      if (timeTableData.details) {
+        timeTableData.details.forEach(detail => {
+          const date = convertDateFormat(detail.date);
+          const filteredSlots = detail.slots.filter(
+            slot =>
+              slot.subject !== '' &&
+              slot.teacher !== '' &&
+              slot.status !== '' &&
+              slot.slotTime !== '',
+          );
 
-        if (filteredSlots.length === 0) {
-          // Nếu tất cả các slots đều trống
-          newItems[date] = [
-            {
-              name: `Không có tiết học cho ngày hôm nay`,
-              slotTime: '',
-              teacher: '',
-              slot: '',
-              status: '',
-            },
-          ];
-        } else {
-          newItems[date] = filteredSlots.map(slot => ({
-            name: `Môn học: ${slot.subject}`,
-            slotTime: slot.slotTime,
-            teacher: `Giáo viên: ${slot.teacher}`,
-            slot: `${slot.slot}`,
-            status: `${slot.status}`,
-          }));
-        }
-      });
-    }
-
-    return newItems;
-  };
+          if (filteredSlots.length === 0) {
+            newItems[date] = [
+              {
+                name: 'Không có tiết học cho ngày hôm nay',
+                slotTime: '',
+                teacher: '',
+                slot: '',
+                status: '',
+              },
+            ];
+          } else {
+            newItems[date] = filteredSlots.map(slot => ({
+              name: `Môn học: ${slot.subject}`,
+              slotTime: slot.slotTime,
+              teacher: `Giáo viên: ${slot.teacher}`,
+              slot: `${slot.slot}`,
+              status: `${slot.status}`,
+            }));
+          }
+        });
+      }
+      return newItems;
+    },
+    [],
+  );
 
   // const fromDate = studentWeeklyTimeTableDates.data.fromDate;
   // const toDate = studentWeeklyTimeTableDates.data.toDate;
@@ -195,70 +215,73 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
     const [day, month, year] = dateString.split('/');
     return `${year}-${month}-${day}`;
   };
-  const loadItems = (day: any) => {
-    setTimeout(() => {
-      const newItems: Items = {...items};
-      if (fromDatee && toDatee && weeklyTimeTable && weeklyTimeTable.data) {
-        const fromDate = new Date(convertDateFormat(fromDatee));
-        const toDate = new Date(convertDateFormat(toDatee));
 
-        for (
-          let date = new Date(fromDate);
-          date <= toDate;
-          date.setDate(date.getDate() + 1)
-        ) {
-          const strTime = timeToString(date.getTime());
-          if (!newItems[strTime]) {
-            newItems[strTime] = [];
-            const dayDetail = weeklyTimeTable.data.details.find(
-              detail => convertDateFormat(detail.date) === strTime,
-            );
-            if (dayDetail) {
-              const numberOfSlotsWithData = dayDetail.slots.filter(
-                slot => slot.subject !== '' && slot.teacher !== '',
-              ).length;
+  const loadItems = useCallback(
+    (day: any) => {
+      setTimeout(() => {
+        const newItems: Items = {...items};
+        if (fromDatee && toDatee && weeklyTimeTable && weeklyTimeTable.data) {
+          const fromDate = new Date(convertDateFormat(fromDatee));
+          const toDate = new Date(convertDateFormat(toDatee));
 
-              if (numberOfSlotsWithData === 0) {
-                // Render only one item if all slots have no data
+          for (
+            let date = new Date(fromDate);
+            date <= toDate;
+            date.setDate(date.getDate() + 1)
+          ) {
+            const strTime = timeToString(date.getTime());
+            if (!newItems[strTime]) {
+              newItems[strTime] = [];
+              const dayDetail = weeklyTimeTable.data.details.find(
+                detail => convertDateFormat(detail.date) === strTime,
+              );
+              if (dayDetail) {
+                const numberOfSlotsWithData = dayDetail.slots.filter(
+                  slot => slot.subject !== '' && slot.teacher !== '',
+                ).length;
+
+                if (numberOfSlotsWithData === 0) {
+                  newItems[strTime].push({
+                    name: 'Không có tiết học cho ngày hôm nay',
+                    slotTime: '',
+                    teacher: '',
+                    slot: '',
+                    status: '',
+                  });
+                } else {
+                  newItems[strTime] = dayDetail.slots
+                    .filter(
+                      slot =>
+                        slot.subject !== '' &&
+                        slot.teacher !== '' &&
+                        slot.status !== '' &&
+                        slot.slotTime !== '',
+                    )
+                    .map(slot => ({
+                      name: `Môn học: ${slot.subject}`,
+                      slotTime: slot.slotTime,
+                      teacher: `Giáo viên: ${slot.teacher}`,
+                      slot: `${slot.slot}`,
+                      status: `${slot.status}`,
+                    }));
+                }
+              } else {
                 newItems[strTime].push({
-                  name: `Không có tiết học cho ngày hôm nay`,
+                  name: 'Không có tiết học cho ngày hôm nay',
                   slotTime: '',
                   teacher: '',
                   slot: '',
                   status: '',
                 });
-              } else {
-                newItems[strTime] = dayDetail.slots
-                  .filter(
-                    slot =>
-                      slot.subject !== '' &&
-                      slot.teacher !== '' &&
-                      slot.status !== '' &&
-                      slot.slotTime !== '',
-                  )
-                  .map(slot => ({
-                    name: `Môn học: ${slot.subject}`,
-                    slotTime: slot.slotTime,
-                    teacher: `Giáo viên: ${slot.teacher}`,
-                    slot: `${slot.slot}`,
-                    status: `${slot.status}`,
-                  }));
               }
-            } else {
-              newItems[strTime].push({
-                name: `Không có tiết học cho ngày hôm nay`,
-                slotTime: '',
-                teacher: '',
-                slot: '',
-                status: '',
-              });
             }
           }
         }
-      }
-      setItems(newItems);
-    }, 1000);
-  };
+        setItems(newItems);
+      }, 1000);
+    },
+    [fromDatee, toDatee, weeklyTimeTable, items, convertDateFormat],
+  );
 
   const getSlotsForDay = (date: Date): any[] | null => {
     const dayOfWeek = date.getDay();
@@ -312,168 +335,85 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
   //   return <Col {...rest} />;
   // };
 
-  const renderItem = (
-    item: Item,
-    index: number,
-    numberOfSlotsWithData: number,
-  ) => {
-    const isFirstItemOfDay =
-      index === 0 ||
-      (index > 0 && Object.values(items)[index - 1]?.[0]?.slot !== item.slot);
+  const renderItem = useCallback(
+    (item: Item, index: number, numberOfSlotsWithData: number) => {
+      const isFirstItemOfDay =
+        index === 0 ||
+        (index > 0 && Object.values(items)[index - 1]?.[0]?.slot !== item.slot);
 
-    // Kiểm tra xem item đang được render có phải là ngày đầu tiên của tuần không
-    const isFirstDayOfTheWeek =
-      index === 0 ||
-      Object.keys(items)[index] !== Object.keys(items)[index - 1];
+      const isFirstDayOfTheWeek =
+        index === 0 ||
+        Object.keys(items)[index] !== Object.keys(items)[index - 1];
 
-    const tableContainerHeight = item.name.startsWith('Không có tiết học')
-      ? 20
-      : 70;
+      const tableContainerHeight = item.name.startsWith('Không có tiết học')
+        ? 20
+        : 70;
 
-    // Kiểm tra nếu tên môn học bắt đầu bằng 'Không có tiết học' thì render một cách phù hợp
-    if (item.name.startsWith('Không có tiết học')) {
-      return (
-        <>
-          {/* Phân cách giữa các ngày */}
-          {isFirstDayOfTheWeek && (
-            <View
+      if (item.name.startsWith('Không có tiết học')) {
+        return (
+          <>
+            {isFirstDayOfTheWeek && (
+              <View
+                style={{
+                  paddingTop: 50,
+                  marginRight: 10,
+                  borderBottomWidth: 2,
+                  borderBottomColor: 'gray',
+                  width: '20%',
+                }}
+              />
+            )}
+            <TouchableOpacity
               style={{
-                paddingTop: 50,
                 marginRight: 10,
-                borderBottomWidth: 2,
-                borderBottomColor: 'gray',
-                width: '20%',
-              }}
-            />
-          )}
-          {/* Nội dung của mỗi item */}
-          <TouchableOpacity
-            style={{
-              marginRight: 10,
-              marginTop: 17,
-              height: tableContainerHeight,
-            }}>
-            <Card>
-              <Card.Content>
-                <Text>{item.name}</Text>
-              </Card.Content>
-            </Card>
-          </TouchableOpacity>
-        </>
-      );
-    } else {
-      // Đặt màu nền và màu chữ dựa trên giá trị của `item.status`
-      let statusBackgroundColor;
-      let statusTextColor = colors.whiteColor; // Mặc định là màu trắng
-      let statusWidth = 70;
+                marginTop: 17,
+                height: tableContainerHeight,
+              }}>
+              <Card>
+                <Card.Content>
+                  <Text>{item.name}</Text>
+                </Card.Content>
+              </Card>
+            </TouchableOpacity>
+          </>
+        );
+      } else {
+        let statusBackgroundColor;
+        let statusTextColor = colors.whiteColor;
+        let statusWidth = 70;
 
-      if (item.status === 'Vắng') {
-        statusBackgroundColor = 'red';
-      } else if (item.status === 'Có mặt') {
-        statusBackgroundColor = 'green';
-      } else if (item.status === 'Chưa bắt đầu') {
-        statusBackgroundColor = 'gray';
-        statusWidth = 100;
+        if (item.status === 'Vắng') {
+          statusBackgroundColor = 'red';
+        } else if (item.status === 'Có mặt') {
+          statusBackgroundColor = 'green';
+        } else if (item.status === 'Chưa bắt đầu') {
+          statusBackgroundColor = 'gray';
+          statusWidth = 100;
+        }
+
+        return (
+          <>
+            {isFirstDayOfTheWeek && (
+              <View
+                style={{
+                  paddingTop: 50,
+                  marginRight: 10,
+                  borderBottomWidth: 2,
+                  borderBottomColor: 'gray',
+                  width: '20%',
+                }}
+              />
+            )}
+            <MemoizedCard
+              key={item.slot + item.teacher + item.slotTime}
+              item={item}
+            />
+          </>
+        );
       }
-      return (
-        <>
-          {/* Phân cách giữa các ngày */}
-          {isFirstDayOfTheWeek && (
-            <View
-              style={{
-                paddingTop: 50,
-                marginRight: 10,
-                borderBottomWidth: 2,
-                borderBottomColor: 'gray',
-                width: '20%',
-              }}
-            />
-          )}
-          {/* Nội dung của mỗi item */}
-          <TouchableOpacity
-            style={{
-              marginRight: 10,
-              marginTop: 17,
-              height: tableContainerHeight,
-            }}>
-            <Card>
-              <Card.Content>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                  <View style={{flex: 1}}>
-                    <Text>{item.slot}</Text>
-                  </View>
-                  <View style={{flex: 7}}>
-                    <Text
-                      style={{
-                        color: colors.warningColor,
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                      }}>
-                      {item.name}
-                    </Text>
-                    <Text
-                      style={{
-                        color: colors.textColor,
-                        fontSize: 14,
-                        // fontSize: 16,
-                        fontWeight: 'bold',
-                        fontStyle: 'italic',
-                      }}>
-                      {item.teacher}
-                    </Text>
-                  </View>
-                  <View style={{flex: 3, alignItems: 'center'}}>
-                    <View
-                      style={{
-                        height: 20,
-                        width: statusWidth,
-                        backgroundColor: statusBackgroundColor,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 20,
-                      }}>
-                      <Text
-                        style={{
-                          color: colors.whiteColor,
-                          fontWeight: 'bold',
-                          fontStyle: 'italic',
-                        }}>
-                        {item.status}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        height: 20,
-                        width: 90,
-                        backgroundColor: 'blue',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: 3,
-                        borderRadius: 5,
-                      }}>
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 'bold',
-                          color: colors.whiteColor,
-                        }}>
-                        {item.slotTime}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </Card.Content>
-            </Card>
-          </TouchableOpacity>
-        </>
-      );
-    }
-  };
+    },
+    [items],
+  );
 
   const renderHeader = (date: any) => {
     const month = date.month ? date.month : date.toString().split(' ')[1];
@@ -546,46 +486,54 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
     );
   };
 
-  const handleWeekChange = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth);
-    const currentMonday = getMondayOfWeek(
-      new Date(monday.split('/').reverse().join('-')),
-    );
-    if (direction === 'prev') {
-      newMonth.setDate(newMonth.getDate() - 7); // Di chuyển đến tuần trước đó
-      currentMonday.setDate(currentMonday.getDate() - 7);
-    } else {
-      newMonth.setDate(newMonth.getDate() + 7); // Di chuyển đến tuần tiếp theo
-      currentMonday.setDate(currentMonday.getDate() + 7);
-    }
-    setCurrentMonth(newMonth);
-    setMonday(getFormattedDate(currentMonday));
-  };
-  //   const handleWeekChange = (direction: 'prev' | 'next') => {
-  //   const currentMonday = getMondayOfWeek(new Date(monday.split('/').reverse().join('-')));
-  //   if (direction === 'prev') {
-  //     currentMonday.setDate(currentMonday.getDate() - 7); // Di chuyển đến thứ Hai tuần trước
-  //   } else {
-  //     currentMonday.setDate(currentMonday.getDate() + 7); // Di chuyển đến thứ Hai tuần tiếp theo
-  //   }
-  //   setMonday(getFormattedDate(currentMonday));
-  // };
+  const handleWeekChange = useCallback(
+    (direction: 'prev' | 'next') => {
+      const newMonth = new Date(currentMonth);
+      const currentMonday = getMondayOfWeek(
+        new Date(monday.split('/').reverse().join('-')),
+      );
+      if (direction === 'prev') {
+        newMonth.setDate(newMonth.getDate() - 7);
+        currentMonday.setDate(currentMonday.getDate() - 7);
+      } else {
+        newMonth.setDate(newMonth.getDate() + 7);
+        currentMonday.setDate(currentMonday.getDate() + 7);
+      }
+      setCurrentMonth(newMonth);
+      setMonday(getFormattedDate(currentMonday));
+      setSelectedDate(timeToString(currentMonday.getTime()));
+      setItems({});
+    },
+    [currentMonth, monday],
+  );
 
-  const handleMonthChange = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth);
-    if (direction === 'prev') {
-      newMonth.setDate(newMonth.getDate() - 7); // Chuyển đến tuần trước đó
-    } else {
-      newMonth.setDate(newMonth.getDate() + 7); // Chuyển đến tuần tiếp theo
-    }
-    setCurrentMonth(newMonth);
-  };
-  const handleDayPress = (day: any) => {
-    const selectedDate = new Date(day.timestamp);
-    // Cập nhật currentMonth với ngày được chọn
-    setCurrentMonth(new Date(day.timestamp));
-    setMonday(getFormattedDate(selectedDate));
-  };
+  // const handleDayPress = (day: any) => {
+  //   const selectedDate = new Date(day.timestamp);
+  //   const monday = getMondayOfWeek(selectedDate);
+  //   setCurrentMonth(monday);
+  //   setMonday(getFormattedDate(monday));
+  //   setSelectedDate(timeToString(monday.getTime()));
+  //   setItems({});
+  // };
+  const handleDayPress = useCallback(
+    (day: any) => {
+      const selectedDate = new Date(day.timestamp);
+      const mondayOfSelectedDate = getMondayOfWeek(selectedDate);
+
+      const currentMonday = getMondayOfWeek(currentMonth);
+      const currentSunday = new Date(currentMonday);
+      currentSunday.setDate(currentSunday.getDate() + 6);
+
+      if (selectedDate < currentMonday || selectedDate > currentSunday) {
+        setCurrentMonth(mondayOfSelectedDate);
+        setMonday(getFormattedDate(mondayOfSelectedDate));
+        setSelectedDate(timeToString(mondayOfSelectedDate.getTime()));
+        setItems({});
+      }
+    },
+    [currentMonth],
+  );
+
   const [agendaCurrentMonth, setAgendaCurrentMonth] = useState(new Date());
   const handleVisibleMonthsChange = (months: any[]) => {
     if (months.length > 0) {
@@ -599,7 +547,7 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
   return (
     <View style={{flex: 1}}>
       <View style={styles.textCenter}>
-        <Text style={styles.textSemester}>HỌC KỲ I</Text>
+        <Text style={styles.textSemester}>{classData}</Text>
       </View>
 
       {renderCalendarHeader()}
@@ -609,6 +557,7 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
         items={items}
         loadItemsForMonth={loadItems}
         selected={currentMonth.toISOString().split('T')[0]}
+        // selected={timeToString(getMondayOfCurrentWeek().getTime())}
         renderItem={renderItem}
         current={currentMonth}
         onDayPress={handleDayPress}
@@ -619,7 +568,10 @@ const WeeklyTimeTable = ({navigation}: MyProps) => {
           textSectionTitleColor: theme.colors.onBackground,
           textMonthFontWeight: 'bold',
           todayTextColor: colors.blackColor,
+          todayDotColor: colors.blackColor,
           textDayHeaderFontWeight: 'bold',
+          selectedDayBackgroundColor: 'transparent',
+          selectedDayTextColor: colors.primaryColor,
         }}
       />
     </View>
@@ -657,7 +609,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.blackColor,
-    margin: 10,
+    marginBottom: 10,
+    marginTop: 0,
   },
   textCenter: {
     justifyContent: 'center',
@@ -753,6 +706,32 @@ const styles = StyleSheet.create({
   },
   notificationsDate: {color: 'black'},
 });
+
+//   const handleWeekChange = (direction: 'prev' | 'next') => {
+//   const currentMonday = getMondayOfWeek(new Date(monday.split('/').reverse().join('-')));
+//   if (direction === 'prev') {
+//     currentMonday.setDate(currentMonday.getDate() - 7); // Di chuyển đến thứ Hai tuần trước
+//   } else {
+//     currentMonday.setDate(currentMonday.getDate() + 7); // Di chuyển đến thứ Hai tuần tiếp theo
+//   }
+//   setMonday(getFormattedDate(currentMonday));
+// };
+
+// const handleMonthChange = (direction: 'prev' | 'next') => {
+//   const newMonth = new Date(currentMonth);
+//   if (direction === 'prev') {
+//     newMonth.setDate(newMonth.getDate() - 7); // Chuyển đến tuần trước đó
+//   } else {
+//     newMonth.setDate(newMonth.getDate() + 7); // Chuyển đến tuần tiếp theo
+//   }
+//   setCurrentMonth(newMonth);
+// };
+// const handleDayPress = (day: any) => {
+//   const selectedDate = new Date(day.timestamp);
+//   // Cập nhật currentMonth với ngày được chọn
+//   setCurrentMonth(new Date(day.timestamp));
+//   setMonday(getFormattedDate(selectedDate));
+// };
 
 // const getSubjectForId = (id: number): string => {
 //   const dayDetails = studentWeeklyTimeTableDates.data.details.find(

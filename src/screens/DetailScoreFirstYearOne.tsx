@@ -19,7 +19,8 @@ interface DetailScoreFirstYearOneProps {
     RootNavigationProps,
     'DetailScoreFirstYearOne'
   >;
-  route: RouteProp<RootNavigationProps, 'DetailScoreFirstYearOne'>;
+  // route: RouteProp<RootNavigationProps, 'DetailScoreFirstYearOne'>;
+  route: RouteProp<{params: {year: string; subject: number}}, 'params'>;
 }
 
 interface Score {
@@ -45,12 +46,12 @@ const DetailScoreFirstYearOne = ({
   navigation,
   route,
 }: DetailScoreFirstYearOneProps) => {
-  const {semesterId}: any = route.params;
+  const {year, subject} = route.params;
 
-  // Tìm kiếm thông tin của học kỳ có ID tương ứng
-  const selectedSemester = scoreByStudent.data.find(
-    semester => semester.id === semesterId,
-  );
+  // // Tìm kiếm thông tin của học kỳ có ID tương ứng
+  // const selectedSemester = scoreByStudent.data.find(
+  //   semester => semester.id === semesterId,
+  // );
 
   const [studentScores, setStudentScores] = useState<StudentScores | null>(
     null,
@@ -60,11 +61,11 @@ const DetailScoreFirstYearOne = ({
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTimeTable = async (userId: string) => {
+    const fetchScores = async (userId: string) => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         const response = await fetch(
-          `https://orbapi.click/api/Scores/ByStudentAllSubject?schoolYear=2023-2024&studentID=${userId}`,
+          `https://orbapi.click/api/Scores/ByStudentBySubject?schoolYear=${year}&studentID=${userId}&subject=${subject}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -73,19 +74,8 @@ const DetailScoreFirstYearOne = ({
         );
         const data = await response.json();
         console.log('Data fetched from API:', JSON.stringify(data, null, 2));
-        if (data.success) {
-          data.data.details.forEach((subject: Subject) => {
-            console.log(`Subject: ${subject.subject}`);
-            if (subject.scores.length > 0) {
-              subject.scores.forEach((score, index) => {
-                console.log(`Score ${index}:`, JSON.stringify(score, null, 2));
-              });
-            } else {
-              console.log(`Scores array for ${subject.subject} is empty`);
-            }
-          });
-          setStudentScores(data.data);
-          // setStudentScoresValue(data.data.details.scores);
+        if (data) {
+          setStudentScores(data);
         } else {
           console.error('Error:', data.message);
         }
@@ -99,8 +89,7 @@ const DetailScoreFirstYearOne = ({
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId) {
           setUserId(storedUserId);
-          // console.log('User ID fetched from AsyncStorage:', storedUserId);
-          fetchTimeTable(storedUserId);
+          fetchScores(storedUserId);
         } else {
           console.error('No user ID found in AsyncStorage');
         }
@@ -110,7 +99,7 @@ const DetailScoreFirstYearOne = ({
     };
 
     fetchUserId();
-  }, []);
+  }, [year, subject]);
   // console.log('AAAAAAAAAA', studentScores?.details.scores);
   return (
     <View style={styles.main}>
@@ -127,7 +116,7 @@ const DetailScoreFirstYearOne = ({
       </View>
       <View>
         <View style={styles.row}>
-          <Text style={styles.semesterText}>{selectedSemester?.semester}</Text>
+          <Text style={styles.semesterText}>{subject}</Text>
         </View>
 
         <View style={[styles.row, {paddingHorizontal: 20}]}>
@@ -135,19 +124,19 @@ const DetailScoreFirstYearOne = ({
             <Text style={[styles.semesterIdText, {fontWeight: 'bold'}]}>
               TBCM:{' '}
             </Text>
-            {selectedSemester?.average}
+            {/* {selectedSemester?.average} */}
           </Text>
           <Text style={[styles.semesterIdText, {fontWeight: 'normal'}]}>
             <Text style={[styles.semesterIdText, {fontWeight: 'bold'}]}>
               Hạnh kiểm:{' '}
             </Text>
-            {selectedSemester?.conduct}
+            {/* {selectedSemester?.conduct} */}
           </Text>
           <Text style={[styles.semesterIdText, {fontWeight: 'normal'}]}>
             <Text style={[styles.semesterIdText, {fontWeight: 'bold'}]}>
               Hạng:{' '}
             </Text>
-            {selectedSemester?.rank}
+            {/* {selectedSemester?.rank} */}
           </Text>
         </View>
         <ScrollView
@@ -192,7 +181,7 @@ const DetailScoreFirstYearOne = ({
                   <View>
                     <Text style={styles.titleEvaluate}>Nhận xét:</Text>
                     <Text style={styles.titleEvaluateDetail}>
-                      {selectedSemester?.note}
+                      {/* {selectedSemester?.note} */}
                     </Text>
                   </View>
                 </View>

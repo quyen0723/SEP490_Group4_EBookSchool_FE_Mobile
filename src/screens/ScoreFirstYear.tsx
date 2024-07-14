@@ -3,61 +3,97 @@ import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootNavigationProps} from './types';
 import TouchableOpacityComponent from '../components/TouchableOpacityComponent';
-import {scoreByStudent} from '../mock/score';
+import {RouteProp} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'ScoreFirstYear'>;
+  route: RouteProp<{params: {year: string}}, 'params'>;
 }
 
-interface SemesterData {
-  id: number;
-  semester: string;
-  schoolYear: string;
-  average: number;
-  conduct: string;
-  rank: number;
+interface SubjectData {
+  subject: string;
+  semester1Average: string;
+  semester2Average: string;
+  yearAverage: string;
 }
 
-const ScoreFirstYear = ({navigation}: MyProps) => {
-  const [semesters, setSemesters] = useState<SemesterData[]>([]);
+const ScoreFirstYear = ({navigation, route}: MyProps) => {
+  const {year} = route.params;
+  const [subjects, setSubjects] = useState<SubjectData[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchedSemesters = scoreByStudent.data.filter(item => item.id <= 3);
-    setSemesters(fetchedSemesters);
-  }, []);
+    const fetchUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId) {
+          setUserId(storedUserId);
+          fetchScores(storedUserId);
+        } else {
+          console.error('No user ID found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error fetching user ID from AsyncStorage', error);
+      }
+    };
 
-  const handleSemesterPress = (semesterId: number) => {
-    navigation.navigate('DetailScoreFirstYearOne', {semesterId: semesterId});
+    fetchUserId();
+  }, [year]);
+
+  const fetchScores = async (userId: string) => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const response = await fetch(
+        `https://orbapi.click/api/Scores/AVGByStudentAllSubject?schoolYear=${year}&studentID=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text) {
+        throw new Error('API response is empty');
+      }
+
+      const data: SubjectData[] = JSON.parse(text);
+      // console.log('Fetched data:', data);
+
+      if (!Array.isArray(data)) {
+        throw new Error('API response is not an array');
+      }
+
+      setSubjects(data);
+    } catch (error) {
+      console.error('Error fetching scores data', error);
+    }
   };
 
-  const renderSemesterComponents = () => {
-    return semesters.map(semesterData => (
+  const handleSubjectPress = (subject: string) => {
+    navigation.navigate('DetailScoreFirstYearOne', {year, subject});
+  };
+
+  const renderSubjectComponents = () => {
+    return subjects.map((subjectData, index) => (
       <TouchableOpacityComponent
-        key={semesterData.id}
-        // imageSource={semesterData.average}
-        imageSource={semesterData.average}
-        title={semesterData.semester}
-        startDate={getStartDate(semesterData.schoolYear)}
-        endDate={getEndDate(semesterData.schoolYear)}
-        tbcm={semesterData.average}
-        hanhKiem={semesterData.conduct}
-        rank={semesterData.rank}
-        onPress={() => handleSemesterPress(semesterData.id)}
+        key={index}
+        imageSource={parseFloat(subjectData.yearAverage)} // Đường dẫn đến icon
+        subject={subjectData.subject}
+        semester1Average={parseFloat(subjectData.semester1Average)}
+        semester2Average={parseFloat(subjectData.semester2Average)}
+        yearAverage={parseFloat(subjectData.yearAverage)}
+        onPress={() => handleSubjectPress(subjectData.subject)}
       />
     ));
   };
 
-  const getStartDate = (schoolYear: string) => {
-    const [startYear] = schoolYear.split('-');
-    return `01/01/${startYear}`;
-  };
-
-  const getEndDate = (schoolYear: string) => {
-    const [, endYear] = schoolYear.split('-');
-    return `31/12/${endYear}`;
-  };
-
-  return <View style={styles.container}>{renderSemesterComponents()}</View>;
+  return <View style={styles.container}>{renderSubjectComponents()}</View>;
 };
 
 export default ScoreFirstYear;

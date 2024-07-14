@@ -14,9 +14,11 @@ import {scoreByStudent} from '../mock/score';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {colors} from '../assets/css/colors';
 import TouchableOpacityAttendance from '../components/TouchableOpacityAttendance';
+import {RouteProp} from '@react-navigation/native';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'DetailAttendanceFirst'>;
+  route: RouteProp<{params: {year: string; semesterId: number}}, 'params'>;
 }
 
 interface SemesterData {
@@ -30,7 +32,8 @@ interface SemesterData {
 
 interface AttendanceSubject {
   'Có mặt': number;
-  Vắng: number;
+  'Vắng không phép': number;
+  'Vắng có phép': number;
   'Chưa bắt đầu': number;
   'Ngày bắt đầu': string;
   'Ngày kết thúc': string;
@@ -49,23 +52,25 @@ interface ApiResponse {
   data: AttendanceData;
 }
 
-// Calculate attendance percentage
+// Calculate attendance percentage for each subject
 const calculateAttendancePercentage = (
   attendanceData: AttendanceData,
-): number => {
-  const subjects = Object.keys(attendanceData);
-  const totalSubjects = subjects.length;
-  let totalPercentage = 0;
+): {[subject: string]: number} => {
+  const attendancePercentageBySubject: {[subject: string]: number} = {};
 
-  subjects.forEach(subject => {
-    const {'Có mặt': present, Vắng: absent} = attendanceData[subject];
-    const totalClasses = present + absent;
+  Object.keys(attendanceData).forEach(subject => {
+    const {
+      'Có mặt': present,
+      'Vắng không phép': absentNoPermission,
+      'Vắng có phép': absentWithPermission,
+    } = attendanceData[subject];
+    const totalClasses = present + absentNoPermission + absentWithPermission;
     const attendancePercentage =
       totalClasses > 0 ? (present / totalClasses) * 100 : 0;
-    totalPercentage += attendancePercentage;
+    attendancePercentageBySubject[subject] = attendancePercentage;
   });
 
-  return totalPercentage / totalSubjects;
+  return attendancePercentageBySubject;
 };
 
 const calculateTotalPresent = (attendanceData: AttendanceData): number => {
@@ -80,47 +85,45 @@ const calculateTotalPresent = (attendanceData: AttendanceData): number => {
 const calculateTotalAbsent = (attendanceData: AttendanceData): number => {
   let totalAbsent = 0;
   for (const subject in attendanceData) {
-    totalAbsent += attendanceData[subject].Vắng;
+    totalAbsent +=
+      attendanceData[subject]['Vắng không phép'] +
+      attendanceData[subject]['Vắng có phép'];
   }
   return totalAbsent;
 };
-const DetailAttendanceFirst = ({navigation}: MyProps) => {
+
+const DetailAttendanceFirst = ({navigation, route}: MyProps) => {
+  const {year, semesterId} = route.params;
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
-  const [studentAttendances, setStudentAttendances] =
-    useState<AttendanceData | null>(null);
+  const [studentAttendances, setStudentAttendances] = useState<
+    AttendanceData[]
+  >([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchTimeTable = async (userId: string) => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         const response = await fetch(
-          `https://orbapi.click/api/Attendance/GetAttendanceByStudentAllSubject?studentID=${userId}&schoolYear=2023-2024`,
+          `https://orbapi.click/api/Attendance/GetAttendanceByStudentAllSubject?studentID=${userId}&schoolYear=${year}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           },
         );
-        const data = await response.json();
-        console.log('Data fetched from API:', JSON.stringify(data, null, 2));
-        if (data.success) {
-          //   data.data.details.forEach((subject: Subject) => {
-          //     console.log(`Subject: ${subject.subject}`);
-          //     if (subject.scores.length > 0) {
-          //       subject.scores.forEach((score, index) => {
-          //         console.log(`Score ${index}:`, JSON.stringify(score, null, 2));
-          //       });
-          //     } else {
-          //       console.log(`Scores array for ${subject.subject} is empty`);
-          //     }
-          //   });
-          //   console.log(data);
-          setStudentAttendances(data.data);
-          // setStudentScoresValue(data.data.details.scores);
-        } else {
-          console.error('Error:', data.message);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+        const data: AttendanceData[] = await response.json();
+        console.log('Data fetched from API:', JSON.stringify(data, null, 2));
+        if (Object.keys(data).length === 0) {
+          // Check if data is empty
+          setLoading(false); // Set loading to false
+          return; // Exit early
+        }
+        setStudentAttendances(data);
       } catch (error) {
         console.error('Error fetching scores data', error);
       }
@@ -150,12 +153,11 @@ const DetailAttendanceFirst = ({navigation}: MyProps) => {
   }, []);
 
   const handleSubjectPress = (subject: string) => {
-    navigation.navigate('DetailAttendanceSubject', {title: subject});
+    navigation.navigate('DetailAttendanceSubject', {title: subject, year});
   };
   const renderSemesterComponents = () => {
-    const tbcm = studentAttendances
-      ? calculateAttendancePercentage(studentAttendances)
-      : 0;
+    const attendancePercentages =
+      calculateAttendancePercentage(studentAttendances);
 
     const totalPresent = studentAttendances
       ? calculateTotalPresent(studentAttendances)
@@ -164,46 +166,33 @@ const DetailAttendanceFirst = ({navigation}: MyProps) => {
     const totalAbsent = studentAttendances
       ? calculateTotalAbsent(studentAttendances)
       : 0;
+
     if (!studentAttendances) return null;
-    return Object.entries(studentAttendances).map(([subject, attendance]) => (
-      <TouchableOpacityAttendance
-        key={subject}
-        title={subject}
-        present={attendance['Có mặt']} // Thay vì present
-        absent={attendance['Vắng']} // Thay vì absent
-        onPress={() => handleSubjectPress(subject)}
-        imageSource={0}
-        startDate={attendance['Ngày bắt đầu']} // Lấy Ngày bắt đầu từ dữ liệu
-        endDate={attendance['Ngày kết thúc']} // Lấy Ngày kết thúc từ dữ liệu
-        tbcm={0}
-      />
-    ));
-  };
-
-  const getStartDate = (schoolYear: string) => {
-    const [startYear] = schoolYear.split('-');
-    return `01/01/${startYear}`;
-  };
-
-  const getEndDate = (schoolYear: string) => {
-    const [, endYear] = schoolYear.split('-');
-    return `31/12/${endYear}`;
+    return Object.entries(studentAttendances).map(([subject, attendance]) => {
+      const totalAbsent =
+        attendance['Vắng không phép'] + attendance['Vắng có phép'];
+      return (
+        <TouchableOpacityAttendance
+          key={subject}
+          title={subject}
+          present={attendance['Có mặt']}
+          absent={totalAbsent}
+          onPress={() => handleSubjectPress(subject)}
+          imageSource={0}
+          startDate={attendance['Ngày bắt đầu']}
+          endDate={attendance['Ngày kết thúc']}
+          tbcm={attendancePercentages[subject]}
+        />
+      );
+    });
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            style={styles.imge}
-            source={require('../assets/images/icons/Back.png')}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chi tiết thông báo</Text>
-        {/* <View style={{flex: 1}} /> */}
-      </View>
-      {renderSemesterComponents()}
-    </ScrollView>
+    <View style={{flex: 1, width: '100%'}}>
+      <ScrollView style={styles.container}>
+        {renderSemesterComponents()}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -221,7 +210,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    // justifyContent: 'center',
     height: 60,
     backgroundColor: colors.primaryColor,
     elevation: 5,
@@ -236,3 +225,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+// const data = await response.json();
+// console.log('Data fetched from API:', JSON.stringify(data, null, 2));
+// if (data.success) {
+//   //   data.data.details.forEach((subject: Subject) => {
+//   //     console.log(`Subject: ${subject.subject}`);
+//   //     if (subject.scores.length > 0) {
+//   //       subject.scores.forEach((score, index) => {
+//   //         console.log(`Score ${index}:`, JSON.stringify(score, null, 2));
+//   //       });
+//   //     } else {
+//   //       console.log(`Scores array for ${subject.subject} is empty`);
+//   //     }
+//   //   });
+//   //   console.log(data);
+//   setStudentAttendances(data.data);
+//   // setStudentScoresValue(data.data.details.scores);
+// } else {
+//   console.error('Error:', data.message);
+// }
+
+// const getStartDate = (schoolYear: string) => {
+//   const [startYear] = schoolYear.split('-');
+//   return `01/01/${startYear}`;
+// };
+
+// const getEndDate = (schoolYear: string) => {
+//   const [, endYear] = schoolYear.split('-');
+//   return `31/12/${endYear}`;
+// };
+
+{
+  /* <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Image
+            style={styles.imge}
+            source={require('../assets/images/icons/Back.png')}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Chi tiết điểm danh</Text>
+
+      </View> */
+}

@@ -10,7 +10,7 @@ export type SectionType = {
 };
 
 export const sections: SectionType[] = [
-  { 
+  {
     title: 'Thông báo',
     data: [
       {
@@ -50,6 +50,30 @@ export const sections: SectionType[] = [
         title: 'Điểm',
       },
       // Add more report items here if needed
+    ],
+  },
+];
+
+export const sectionByTeacher: SectionType[] = [
+  {
+    title: 'Thông báo',
+    data: [
+      {
+        image: require('../assets/images/icons/Notification.png'),
+        id: '1',
+        title: 'Thông báo',
+      },
+    ],
+  },
+  {
+    title: 'Truy cập thông tin',
+    data: [
+      {
+        image: require('../assets/images/icons/Calendar.png'),
+        id: '2',
+        title: 'Thời khóa biểu',
+      },
+      // Add more access items here if needed
     ],
   },
 ];

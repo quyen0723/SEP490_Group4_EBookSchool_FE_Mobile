@@ -1,13 +1,16 @@
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, Text} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootNavigationProps} from './types';
 import TouchableOpacityComponent from '../components/TouchableOpacityComponent';
 import {scoreByStudent} from '../mock/score';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TouchableOpacityAttendance from '../components/TouchableOpacityAttendance';
+import {RouteProp} from '@react-navigation/native';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'AttendanceFirstYear'>;
+  route: RouteProp<{params: {year: string}}, 'params'>;
 }
 
 interface SemesterData {
@@ -75,46 +78,64 @@ const calculateTotalAbsent = (attendanceData: AttendanceData): number => {
   }
   return totalAbsent;
 };
-const AttendanceFirstYear = ({navigation}: MyProps) => {
+const AttendanceFirstYear = ({navigation, route}: MyProps) => {
+  const {year} = route.params;
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
-  const [studentAttendances, setStudentAttendances] =
-    useState<AttendanceData | null>(null);
+  const [studentAttendances, setStudentAttendances] = useState<
+    AttendanceData[]
+  >([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true); // Add loading state
 
   useEffect(() => {
     const fetchTimeTable = async (userId: string) => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         const response = await fetch(
-          `https://orbapi.click/api/Attendance/GetAttendanceByStudentAllSubject?studentID=${userId}&schoolYear=2023-2024`,
+          `https://orbapi.click/api/Attendance/GetAttendanceByStudentAllSubject?studentID=${userId}&schoolYear=${year}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           },
         );
-        const data = await response.json();
-        console.log('Data fetched from API:', JSON.stringify(data, null, 2));
-        if (data.success) {
-          //   data.data.details.forEach((subject: Subject) => {
-          //     console.log(`Subject: ${subject.subject}`);
-          //     if (subject.scores.length > 0) {
-          //       subject.scores.forEach((score, index) => {
-          //         console.log(`Score ${index}:`, JSON.stringify(score, null, 2));
-          //       });
-          //     } else {
-          //       console.log(`Scores array for ${subject.subject} is empty`);
-          //     }
-          //   });
-          //   console.log(data);
-          setStudentAttendances(data.data);
-          // setStudentScoresValue(data.data.details.scores);
-        } else {
-          console.error('Error:', data.message);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+        const data: AttendanceData[] = await response.json();
+        console.log('Data fetched from API:', JSON.stringify(data, null, 2));
+        if (Object.keys(data).length === 0) {
+          // Check if data is empty
+          setLoading(false); // Set loading to false
+          return; // Exit early
+        }
+        setStudentAttendances(data);
+        // if (data) {
+        //   //   data.data.details.forEach((subject: Subject) => {
+        //   //     console.log(`Subject: ${subject.subject}`);
+        //   //     if (subject.scores.length > 0) {
+        //   //       subject.scores.forEach((score, index) => {
+        //   //         console.log(`Score ${index}:`, JSON.stringify(score, null, 2));
+        //   //       });
+        //   //     } else {
+        //   //       console.log(`Scores array for ${subject.subject} is empty`);
+        //   //     }
+        //   //   });
+        //   //   console.log(data);
+        //   if (Object.keys(data.data).length === 0) {
+        //     // Check if data is empty
+        //     setLoading(false); // Set loading to false
+        //     return; // Exit early
+        //   }
+        //   setStudentAttendances(data);
+        //   // setStudentScoresValue(data.data.details.scores);
+        // } else {
+        //   console.error('Error:', data.message);
+        // }
       } catch (error) {
         console.error('Error fetching scores data', error);
       }
+      setLoading(false);
     };
 
     const fetchUserId = async () => {
@@ -141,11 +162,20 @@ const AttendanceFirstYear = ({navigation}: MyProps) => {
   }, []);
 
   const handleSemesterPress = (semesterId: number) => {
-    navigation.navigate('DetailAttendanceFirst');
+    navigation.navigate('DetailAttendanceFirst', {year, semesterId});
+    // navigation.navigate('DetailAttendanceFirst');
     // navigation.navigate('DetailAttendanceFirst', {semesterId: semesterId});
   };
 
   const renderSemesterComponents = () => {
+    if (loading) {
+      // Render loading indicator if still loading
+      return <Text>Loading...</Text>;
+    }
+    if (!studentAttendances || Object.keys(studentAttendances).length === 0) {
+      // Render message if data is empty
+      return <Text>Không có điểm danh nào cho năm học này</Text>;
+    }
     const tbcm = studentAttendances
       ? calculateAttendancePercentage(studentAttendances)
       : 0;
@@ -159,7 +189,7 @@ const AttendanceFirstYear = ({navigation}: MyProps) => {
       : 0;
 
     return semesters.map(semesterData => (
-      <TouchableOpacityComponent
+      <TouchableOpacityAttendance
         key={semesterData.id}
         // imageSource={semesterData.average}
         imageSource={tbcm}
@@ -170,9 +200,11 @@ const AttendanceFirstYear = ({navigation}: MyProps) => {
         // endDate={getEndDate(semesterData.schoolYear)}
         // tbcm={semesterData.average}
         tbcm={tbcm + 20}
-        hanhKiem={totalPresent}
-        rank={totalAbsent}
+        // hanhKiem={totalPresent}
+        // rank={totalAbsent}
         onPress={() => handleSemesterPress(semesterData.id)}
+        present={totalPresent}
+        absent={totalAbsent}
       />
     ));
   };

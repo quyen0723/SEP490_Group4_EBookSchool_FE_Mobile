@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   touchable: {
     flexDirection: 'row',
     padding: 10,
-    margin: 15,
+    margin: 10,
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',

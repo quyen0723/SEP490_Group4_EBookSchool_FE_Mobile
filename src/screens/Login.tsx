@@ -9,49 +9,64 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp} from '@react-navigation/native';
 
 interface User {
-  _id: string; // Add _id field
-  name: string;
+  id: string; // Updated to match API response
+  username: string;
+  fullname: string;
+  address: string;
   email: string;
-  // Add other user fields here
+  phone: string;
+  avatar: string;
 }
+
+interface ClassInfo {
+  ID: string;
+  Classroom: string;
+}
+
+interface ApiResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  permissions: string[];
+  roles: string[];
+  schoolYears: string[];
+  classes: {
+    [key: string]: ClassInfo[];
+  };
+  success?: boolean;
+  message?: string;
+}
+
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'Login'>;
   route: RouteProp<RootNavigationProps, 'Login'>;
 }
 
 const Login = ({navigation}: MyProps) => {
-  const [username, setUsername] = useState<string>('STUDENTLVHS0001');
+  // const [username, setUsername] = useState<string>('ANHLHS0001');
+  const [username, setUsername] = useState<string>('admin');
   const [password, setPassword] = useState<string>('aA@123');
-  const [data, setData] = useState<[]>();
-  const [badEmail, setBadEmail] = useState<boolean>(false);
-  const [badPassword, setBadPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
 
-  // const validate = () => {
-  //   let valid = true;
+  const validate = () => {
+    let valid = true;
 
-  //   if (email == '') {
-  //     setBadEmail(true);
-  //     valid = false;
-  //   } else if (email != '') {
-  //     setBadEmail(false);
-  //   }
-  //   if (password == '') {
-  //     setBadPassword(true);
-  //     valid = false;
-  //   } else if (password != '') {
-  //     setBadPassword(false);
-  //   }
+    if (username === '') {
+      Alert.alert('Validation Error', 'Please enter your username');
+      valid = false;
+    }
+    if (password === '') {
+      Alert.alert('Validation Error', 'Please enter your password');
+      valid = false;
+    }
 
-  //   return valid;
-  // };
+    return valid;
+  };
 
   const login = async () => {
-    // if (!validate()) {
-    //   return;
-    // }
-
+    if (!validate()) {
+      return;
+    }
     setLoading(true);
 
     try {
@@ -63,20 +78,32 @@ const Login = ({navigation}: MyProps) => {
         body: JSON.stringify({username, password}),
       });
 
-      const data = await response.json();
+      const data: ApiResponse = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok && data.accessToken) {
+        // Updated condition
         // Save access token to AsyncStorage
-        await AsyncStorage.setItem('accessToken', data.data.accessToken);
+        await AsyncStorage.setItem('accessToken', data.accessToken);
         await AsyncStorage.setItem(
           'permissions',
-          JSON.stringify(data.data.permissions),
+          JSON.stringify(data.permissions),
         );
-        // Navigate to HomeMain screen
-        await AsyncStorage.setItem('userId', data.data.user.id);
-        console.log('Navigating to HomeMain with userId:', data.data.user.id);
-        navigation.navigate('HomeMain', {userId: data.data.user.id});
-        // navigation.navigate('HomeMain');
+        await AsyncStorage.setItem('userId', data.user.id);
+        await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
+        await AsyncStorage.setItem(
+          'userSchoolYears',
+          JSON.stringify(data.schoolYears),
+        );
+
+        const firstSchoolYear = data.schoolYears[0];
+        // await AsyncStorage.setItem(
+        //   'userClasses',
+        //   JSON.stringify(data.classes[firstSchoolYear]),
+        // );
+        await AsyncStorage.setItem('userClasses', JSON.stringify(data.classes));
+
+        console.log('Navigating to HomeMain with userId:', data.user.id);
+        navigation.navigate('HomeMain', {userId: data.user.id});
       } else {
         console.error('Login failed', data);
         Alert.alert(
@@ -98,30 +125,18 @@ const Login = ({navigation}: MyProps) => {
       <Text style={styles.textLabel}>Tên tài khoản:</Text>
       <TextInput
         value={username}
-        onChangeText={txt => setUsername(txt)}
+        onChangeText={setUsername}
         style={styles.input}
       />
-      {/* {badEmail && <Text style={styles.errorText}>Please Enter Email</Text>} */}
       <Text style={styles.textLabel}>Mật khẩu:</Text>
       <TextInput
         value={password}
-        onChangeText={txt => setPassword(txt)}
-        secureTextEntry={true}
+        onChangeText={setPassword}
+        secureTextEntry
         style={styles.input}
       />
-      {/* {badPassword && (
-        <Text style={styles.errorText}>Please Enter Password</Text>
-      )}
-      {error !== '' && <Text style={styles.errorText}>{error}</Text>} */}
       <Text style={styles.textForgot}>Quên mật khẩu?</Text>
-      <TouchableOpacity
-        style={styles.loginBtn}
-        onPress={() => {
-          // if (validate()) {
-          //   login();
-          // }
-          login();
-        }}>
+      <TouchableOpacity style={styles.loginBtn} onPress={login}>
         <Text style={styles.btnText}>Đăng nhập</Text>
       </TouchableOpacity>
       <Loader visible={loading} />

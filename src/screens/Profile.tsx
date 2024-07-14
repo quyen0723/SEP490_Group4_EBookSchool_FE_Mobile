@@ -21,8 +21,8 @@ const Profile = ({route}: any) => {
           },
         });
         const data = await res.json();
-        if (data.success) {
-          setUser(data.data);
+        if (data) {
+          setUser(data);
         } else {
           setError(data.message);
         }

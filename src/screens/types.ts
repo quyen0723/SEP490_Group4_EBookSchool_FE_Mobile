@@ -8,6 +8,7 @@ export type RootNavigationProps = {
   Profile: {user: User};
   Notification: undefined;
   NotificationDetail: undefined;
+  WeeklyTimeTableMain: undefined;
   WeeklyTimeTable: undefined;
   Attendance: undefined;
   ScoreMain: undefined;

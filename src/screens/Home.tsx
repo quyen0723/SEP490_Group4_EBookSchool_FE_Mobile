@@ -26,7 +26,12 @@ import {
   DrawerNavigationProp,
   createDrawerNavigator,
 } from '@react-navigation/drawer';
-import {ItemType, SectionType, sections} from '../components/Data';
+import {
+  ItemType,
+  SectionType,
+  sectionByTeacher,
+  sections,
+} from '../components/Data';
 import {handleLogout} from '../components/Handle';
 import ButtonTab from '../navigations/ButtonTab';
 import {RootNavigationProps} from './types';
@@ -37,6 +42,8 @@ import WeeklyTimeTable from './WeeklyTimeTable';
 import Attendance from './Attendance';
 import Score from './ScoreMain';
 import Exam from './Exam';
+import WeeklyTimeTableMain from './WeeklyTimeTableMain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // interface MyProps {
 //   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
 // }
@@ -79,7 +86,7 @@ const handleItemClickAction = ({
       console.log('Item IDĐ:', item.id);
       navigation.navigate('Notification');
     } else if (itemId === '2') {
-      navigation.navigate('WeeklyTimeTable');
+      navigation.navigate('WeeklyTimeTableMain');
     } else if (itemId === '3') {
       navigation.navigate('Exam');
     } else if (itemId === '4') {
@@ -119,11 +126,33 @@ const renderItem = ({
   );
 };
 function HomeScreen({navigation}: MyProps) {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const storedRole = await AsyncStorage.getItem('userRoles');
+        if (storedRole) {
+          const parsedRoles = JSON.parse(storedRole);
+          setRole(parsedRoles[0]);
+        } else {
+          console.error('No user roles found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error fetching user roles from AsyncStorage', error);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  const data = role === 'Student' ? sections : sectionByTeacher;
+
   return (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
       {/* <Button onPress={() => navigation.navigate('Login')} title="Logout" /> */}
       <FlatList
-        data={sections}
+        data={data}
         renderItem={({item}) => renderFlatList({item, navigation})}
         keyExtractor={(item, index) => index.toString()}
       />
@@ -177,6 +206,10 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
         <Drawer.Screen name="Attendance" component={Attendance} />
         <Drawer.Screen name="Score" component={Score} />
         <Drawer.Screen name="Exam" component={Exam} />
+        {/* <Drawer.Screen
+          name="WeeklyTimeTableMain"
+          component={WeeklyTimeTableMain}
+        /> */}
       </Drawer.Navigator>
       {/* <ButtonTab navigation={navigation} /> */}
     </SafeAreaView>

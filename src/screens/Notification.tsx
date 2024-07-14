@@ -79,8 +79,8 @@ const Notification = ({navigation}: MyProps) => {
 
       const data = await response.json();
 
-      if (data.success) {
-        const notificationsData = data.data.map((item: any) => ({
+      if (data) {
+        const notificationsData = data.map((item: any) => ({
           id: item.id,
           title: item.title,
           content: item.content,
