@@ -12,6 +12,7 @@ import {View} from 'react-native';
 
 import AppNavigator from './src/navigations/AppNavigator';
 import ExampleTable from './src/screens/ExampleTable';
+import DropdownComponent from './src/components/DropdownComponent';
 
 export type RootStackParamsList = {
   Home: undefined;
@@ -22,7 +23,6 @@ export type RootStackParamsList = {
 };
 
 const Stack = createStackNavigator<RootStackParamsList>();
-
 const App = () => {
   return (
     // <NavigationContainer>
@@ -32,7 +32,9 @@ const App = () => {
     //   </Stack.Navigator>
     // </NavigationContainer>
     <View style={{flex: 1}}>
-      <AppNavigator />
+      {/* <AppNavigator /> */}
+
+      <DropdownComponent />
       {/* <ExampleTable /> */}
     </View>
   );

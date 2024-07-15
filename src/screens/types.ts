@@ -10,6 +10,7 @@ export type RootNavigationProps = {
   NotificationDetail: undefined;
   WeeklyTimeTableMain: undefined;
   WeeklyTimeTable: undefined;
+  WeeklyTimeTableTeacher: undefined;
   Attendance: undefined;
   ScoreMain: undefined;
   ScoreFirstYear: undefined;

@@ -75,9 +75,11 @@ const renderFlatList = ({
 const handleItemClickAction = ({
   item,
   navigation,
+  role,
 }: {
   item: ItemType;
   navigation?: MyProps;
+  role: string | null;
 }) => {
   if (navigation) {
     const itemId = item.id.toString();
@@ -86,7 +88,11 @@ const handleItemClickAction = ({
       console.log('Item IDĐ:', item.id);
       navigation.navigate('Notification');
     } else if (itemId === '2') {
-      navigation.navigate('WeeklyTimeTableMain');
+      if (role === 'Student') {
+        navigation.navigate('WeeklyTimeTableMain');
+      } else {
+        navigation.navigate('WeeklyTimeTableTeacher');
+      }
     } else if (itemId === '3') {
       navigation.navigate('Exam');
     } else if (itemId === '4') {
@@ -110,12 +116,14 @@ const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
 const renderItem = ({
   item,
   navigation,
+  role,
 }: {
   item: ItemType;
   navigation: MyProps;
+  role: string | null;
 }) => {
   const handleItemClick = () => {
-    handleItemClickAction({item, navigation});
+    handleItemClickAction({item, navigation, role});
   };
 
   return (
@@ -125,6 +133,7 @@ const renderItem = ({
     </TouchableOpacity>
   );
 };
+
 function HomeScreen({navigation}: MyProps) {
   const [role, setRole] = useState<string | null>(null);
 
