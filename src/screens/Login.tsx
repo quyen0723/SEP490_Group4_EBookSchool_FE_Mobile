@@ -1,5 +1,5 @@
 import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {TextInput} from 'react-native-gesture-handler';
 import Loader from '../components/Loader';
@@ -7,6 +7,7 @@ import {colors} from '../assets/css/colors';
 import {RootNavigationProps} from './types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp} from '@react-navigation/native';
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 interface User {
   id: string; // Updated to match API response
@@ -43,23 +44,56 @@ interface MyProps {
 }
 
 const Login = ({navigation}: MyProps) => {
+  // const [username, setUsername] = useState<string>('Supervisor');
+  // const [username, setUsername] = useState<string>('BinhDV');
+  // const [username, setUsername] = useState<string>('nghiahh');
   // const [username, setUsername] = useState<string>('ANHLHS0001');
-  const [username, setUsername] = useState<string>('admin');
+  // const [username, setUsername] = useState<string>('ANVHS0002');
+  const [username, setUsername] = useState<string>('');
+  // const [username, setUsername] = useState<string>('belv2');
+  // const [username, setUsername] = useState<string>('admin');
   const [password, setPassword] = useState<string>('aA@123');
   const [loading, setLoading] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{username?: string; password?: string}>(
+    {},
+  );
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+
+  // Ensure username is reset upon loading the login screen
+  useEffect(() => {
+    setUsername('ANHNHHS0001'); // Reset the username to the new value you want
+  }, []);
+
+  const sortSchoolYearsDescending = (schoolYears: string[]) => {
+    return schoolYears.sort((a, b) => {
+      const [startYearA, endYearA] = a.split('-').map(Number);
+      const [startYearB, endYearB] = b.split('-').map(Number);
+      return endYearB - endYearA || startYearB - startYearA;
+    });
+  };
 
   const validate = () => {
     let valid = true;
+    const newErrors: {username?: string; password?: string} = {};
 
     if (username === '') {
-      Alert.alert('Validation Error', 'Please enter your username');
+      newErrors.username = 'Không được bỏ trống!';
       valid = false;
-    }
-    if (password === '') {
-      Alert.alert('Validation Error', 'Please enter your password');
+    } else if (username.length < 4) {
+      newErrors.username = 'Tên đăng nhập ít nhất 4 kí tự!';
       valid = false;
     }
 
+    if (password === '') {
+      newErrors.password = 'Không được bỏ trống!';
+      valid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'Mật khẩu ít nhất 6 kí tự!';
+      valid = false;
+    }
+
+    setErrors(newErrors);
     return valid;
   };
 
@@ -83,17 +117,45 @@ const Login = ({navigation}: MyProps) => {
       if (response.ok && data.accessToken) {
         // Updated condition
         // Save access token to AsyncStorage
+        const loginTimestamp = new Date().getTime();
         await AsyncStorage.setItem('accessToken', data.accessToken);
+        await AsyncStorage.setItem('loginTimestamp', loginTimestamp.toString());
         await AsyncStorage.setItem(
           'permissions',
           JSON.stringify(data.permissions),
         );
         await AsyncStorage.setItem('userId', data.user.id);
         await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
+        if (data.roles.length > 1) {
+          const roles = [...data.roles];
+          const indexHomeroomTeacher = roles.indexOf('Homeroom Teacher');
+          const indexSubjectTeacher = roles.indexOf('Subject Teacher');
+
+          if (indexHomeroomTeacher !== -1 && indexSubjectTeacher !== -1) {
+            const filteredRoles = roles.filter(
+              role => role !== 'Homeroom Teacher',
+            );
+            await AsyncStorage.setItem(
+              'userRoles',
+              JSON.stringify(filteredRoles),
+            );
+            console.log(filteredRoles);
+          } else {
+            await AsyncStorage.setItem('userRoles', JSON.stringify(roles));
+            console.log(roles);
+          }
+        } else {
+          await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
+          console.log(data.roles);
+        }
+        // console.log(data.roles);
+        // await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
+        const sortedSchoolYears = sortSchoolYearsDescending(data.schoolYears);
         await AsyncStorage.setItem(
           'userSchoolYears',
-          JSON.stringify(data.schoolYears),
+          JSON.stringify(sortedSchoolYears),
         );
+        console.log('School years sorted and saved:', sortedSchoolYears);
 
         const firstSchoolYear = data.schoolYears[0];
         // await AsyncStorage.setItem(
@@ -106,14 +168,18 @@ const Login = ({navigation}: MyProps) => {
         navigation.navigate('HomeMain', {userId: data.user.id});
       } else {
         console.error('Login failed', data);
-        Alert.alert(
-          'Login Failed',
-          data.message || 'Invalid username or password',
+        setAlertMessage(
+          data.message ||
+            'Tài khoản không tồn tại. Bạn vui lòng đăng nhập đúng tài khoản hoặc truy cập vào website để thay đổi mật khẩu nhé!',
         );
+        setShowAlert(true);
       }
     } catch (error) {
-      console.error('Error logging in', error);
-      Alert.alert('Error', 'An error occurred while logging in');
+      // console.error('Error logging in', error);
+      setAlertMessage(
+        'Tài khoản không tồn tại. Bạn vui lòng đăng nhập đúng tài khoản hoặc truy cập vào website để thay đổi mật khẩu nhé!',
+      );
+      setShowAlert(true);
     } finally {
       setLoading(false);
     }
@@ -125,21 +191,52 @@ const Login = ({navigation}: MyProps) => {
       <Text style={styles.textLabel}>Tên tài khoản:</Text>
       <TextInput
         value={username}
-        onChangeText={setUsername}
+        onChangeText={text => {
+          setUsername(text);
+          setErrors(prevErrors => ({...prevErrors, username: ''}));
+        }}
         style={styles.input}
       />
+      {errors.username ? (
+        <Text style={styles.errorText}>{errors.username}</Text>
+      ) : null}
+
       <Text style={styles.textLabel}>Mật khẩu:</Text>
       <TextInput
         value={password}
-        onChangeText={setPassword}
+        onChangeText={text => {
+          setPassword(text);
+          setErrors(prevErrors => ({...prevErrors, password: ''}));
+        }}
         secureTextEntry
         style={styles.input}
       />
-      <Text style={styles.textForgot}>Quên mật khẩu?</Text>
+      {errors.password ? (
+        <Text style={styles.errorText}>{errors.password}</Text>
+      ) : null}
+
       <TouchableOpacity style={styles.loginBtn} onPress={login}>
         <Text style={styles.btnText}>Đăng nhập</Text>
       </TouchableOpacity>
       <Loader visible={loading} />
+      <AwesomeAlert
+        show={showAlert}
+        showProgress={false}
+        title="Đăng nhập không thành công"
+        message={alertMessage}
+        closeOnTouchOutside={true}
+        closeOnHardwareBackPress={false}
+        showCancelButton={false}
+        showConfirmButton={true}
+        confirmText=" Đồng ý "
+        confirmButtonColor={colors.primaryColor}
+        onConfirmPressed={() => {
+          setShowAlert(false);
+        }}
+        titleStyle={styles.alertTitle}
+        messageStyle={styles.alertMessage}
+        confirmButtonTextStyle={styles.alertButtonText}
+      />
     </View>
   );
 };
@@ -200,5 +297,17 @@ const styles = StyleSheet.create({
     color: 'red',
     marginLeft: 20,
     marginTop: 5,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  alertMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  alertButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

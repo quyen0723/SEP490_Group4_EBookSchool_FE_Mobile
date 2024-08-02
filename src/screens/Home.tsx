@@ -12,11 +12,12 @@ import {
   TextInput,
   Button,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Splash from './Splash';
 import {
   NavigationContainer,
+  useFocusEffect,
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
@@ -41,7 +42,7 @@ import {useNavigation} from '@react-navigation/native';
 import WeeklyTimeTable from './WeeklyTimeTable';
 import Attendance from './Attendance';
 import Score from './ScoreMain';
-import Exam from './Exam';
+import Calculate from './Calculate';
 import WeeklyTimeTableMain from './WeeklyTimeTableMain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // interface MyProps {
@@ -55,17 +56,20 @@ interface MyProps {
 const renderFlatList = ({
   item,
   navigation,
+  role,
 }: {
   item: SectionType;
   navigation?: MyProps;
+  role: string | null;
 }) => (
   <>
     {renderSectionHeader({section: item})}
     <FlatList
       data={item.data}
-      renderItem={({item}) => renderItem({item, navigation: navigation!})}
+      renderItem={({item}) => renderItem({item, navigation: navigation!, role})}
       keyExtractor={item => item.id.toString()}
       numColumns={item.data.length === 1 ? 1 : 2}
+      key={item.data.length === 1 ? 'h' : 'v'} // Thêm key để buộc FlatList render lại khi numColumns thay đổi
       contentContainerStyle={styles.contentContainerStyle}
       horizontal={item.data.length === 1}
     />
@@ -81,20 +85,25 @@ const handleItemClickAction = ({
   navigation?: MyProps;
   role: string | null;
 }) => {
+  // if (!role && (itemId === '2' || itemId === '4')) {
+  //   console.log('Navigation prevented for item:', itemId);
+  //   return;
+  // }
+
   if (navigation) {
     const itemId = item.id.toString();
-
     if (itemId === '1') {
       console.log('Item IDĐ:', item.id);
       navigation.navigate('Notification');
     } else if (itemId === '2') {
-      if (role === 'Student') {
-        navigation.navigate('WeeklyTimeTableMain');
-      } else {
-        navigation.navigate('WeeklyTimeTableTeacher');
-      }
+      console.log('hhhhhhhhhhhhhhhhh', role);
+      // if (role === 'Admin') {
+      //   navigation.navigate('WeeklyTimeTableTeacher');
+      // } else {
+      navigation.navigate('WeeklyTimeTableMain');
+      // }
     } else if (itemId === '3') {
-      navigation.navigate('Exam');
+      navigation.navigate('Calculate');
     } else if (itemId === '4') {
       navigation.navigate('Attendance');
     } else if (itemId === '5') {
@@ -136,58 +145,225 @@ const renderItem = ({
 
 function HomeScreen({navigation}: MyProps) {
   const [role, setRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const storedRole = await AsyncStorage.getItem('userRoles');
-        if (storedRole) {
-          const parsedRoles = JSON.parse(storedRole);
-          setRole(parsedRoles[0]);
-        } else {
-          console.error('No user roles found in AsyncStorage');
+  // useEffect(() => {
+  //   const fetchUserRole = async () => {
+  //     try {
+  //       const storedRole = await AsyncStorage.getItem('userRoles');
+  //       if (storedRole) {
+  //         const parsedRoles = JSON.parse(storedRole);
+  //         setRole(parsedRoles[0]);
+  //         // console.log(parsedRoles[0]);
+  //         console.log('User role:', parsedRoles[0]);
+  //       } else {
+  //         console.error('No user roles found in AsyncStorage');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching user roles from AsyncStorage', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchUserRole();
+  // }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserRole = async () => {
+        try {
+          const storedRole = await AsyncStorage.getItem('userRoles');
+          if (storedRole) {
+            const parsedRoles = JSON.parse(storedRole);
+            setRole(parsedRoles[0]);
+            console.log('User role:', parsedRoles[0]); // In ra vai trò đã được đặt
+          } else {
+            console.error('No user roles found in AsyncStorage');
+          }
+        } catch (error) {
+          console.error('Error fetching user roles from AsyncStorage', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching user roles from AsyncStorage', error);
-      }
-    };
+      };
 
-    fetchUserRole();
-  }, []);
+      fetchUserRole();
+    }, [navigation]), // Chạy lại khi navigation thay đổi
+  );
 
-  const data = role === 'Student' ? sections : sectionByTeacher;
-
+  const data = role == 'Student' ? sections : sectionByTeacher;
+  console.log('Role:', role);
+  console.log('Data:', data);
   return (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      {/* <Button onPress={() => navigation.navigate('Login')} title="Logout" /> */}
-      <FlatList
-        data={data}
-        renderItem={({item}) => renderFlatList({item, navigation})}
-        keyExtractor={(item, index) => index.toString()}
-      />
+      {/* Hiển thị thông báo nếu đang tải dữ liệu */}
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <FlatList
+          data={data}
+          renderItem={({item}) => renderFlatList({item, navigation, role})}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      )}
     </View>
   );
 }
 
-function LogoutScreen({navigation}: MyProps) {
-  return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <Button onPress={() => handleLogout(navigation)} title="Logout" />
-    </View>
-  );
-}
+// function LogoutScreen({navigation}: MyProps) {
+//   return (
+//     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+//       <Button onPress={() => handleLogout(navigation)} title="Đăng xuất" />
+//     </View>
+//   );
+// }
 
 const Drawer = createDrawerNavigator();
 
 const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [role, setRole] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserRole = async () => {
+        try {
+          const storedRole = await AsyncStorage.getItem('userRoles');
+          if (storedRole) {
+            const parsedRoles = JSON.parse(storedRole);
+            setRole(parsedRoles[0]);
+            console.log('User role:', parsedRoles[0]);
+          } else {
+            console.error('No user roles found in AsyncStorage');
+          }
+        } catch (error) {
+          console.error('Error fetching user roles from AsyncStorage', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchUserRole();
+    }, [navigation]),
+  );
+
+  const handleLogoutPress = async () => {
+    handleLogout(navigation);
+  };
+
+  if (loading) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  const commonScreens = (
+    <>
+      <Drawer.Screen
+        name="E-School"
+        component={HomeScreen}
+        options={{
+          title: 'E-School',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Home.png')}
+              style={{width: size, height: size, tintColor: color}}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          title: 'Thông tin cá nhân',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/person.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Notification"
+        component={Notification}
+        options={{
+          title: 'Thông báo',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Notification.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="WeeklyTimeTable"
+        component={WeeklyTimeTableMain}
+        options={{
+          title: 'Thời khóa biểu',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Calendar.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Attendance"
+        component={Attendance}
+        options={{
+          title: 'Điểm danh',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Attendance.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+    </>
+  );
+
+  const studentScreens = (
+    <>
+      <Drawer.Screen
+        name="Calculate"
+        component={Calculate}
+        options={{
+          title: 'Tính điểm',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Exam.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Score"
+        component={Score}
+        options={{
+          title: 'Điểm',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Point.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
-      {/* <View style={styles.header}> */}
       <Drawer.Navigator
-        // initialRouteName="E-School"
         screenOptions={{
           headerTitleAlign: 'center',
           headerStyle: {
@@ -199,28 +375,28 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
             fontWeight: 'bold',
           },
         }}>
+        {commonScreens}
+        {role === 'Student' && studentScreens}
         <Drawer.Screen
-          name="E-School"
-          component={HomeScreen}
-          initialParams={{navigation}}
+          name="Logout"
+          component={View}
+          options={{
+            title: 'Đăng xuất',
+            drawerIcon: ({color, size}) => (
+              <Image
+                source={require('../assets/images/icons/logout.png')}
+                style={{width: size, height: size}}
+              />
+            ),
+          }}
+          listeners={{
+            drawerItemPress: e => {
+              e.preventDefault();
+              handleLogoutPress();
+            },
+          }}
         />
-        <Drawer.Screen name="Logout" component={LogoutScreen} />
-        <Drawer.Screen
-          name="Profile"
-          component={Profile}
-          // initialParams={{user}}
-        />
-        <Drawer.Screen name="Notification" component={Notification} />
-        <Drawer.Screen name="WeeklyTimeTable" component={WeeklyTimeTable} />
-        <Drawer.Screen name="Attendance" component={Attendance} />
-        <Drawer.Screen name="Score" component={Score} />
-        <Drawer.Screen name="Exam" component={Exam} />
-        {/* <Drawer.Screen
-          name="WeeklyTimeTableMain"
-          component={WeeklyTimeTableMain}
-        /> */}
       </Drawer.Navigator>
-      {/* <ButtonTab navigation={navigation} /> */}
     </SafeAreaView>
   );
 };

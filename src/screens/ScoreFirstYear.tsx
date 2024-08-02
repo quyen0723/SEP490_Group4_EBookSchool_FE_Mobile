@@ -1,10 +1,12 @@
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, ScrollView, ActivityIndicator} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootNavigationProps} from './types';
 import TouchableOpacityComponent from '../components/TouchableOpacityComponent';
 import {RouteProp} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Loader from '../components/Loader';
+import {colors} from '../assets/css/colors';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'ScoreFirstYear'>;
@@ -22,6 +24,7 @@ const ScoreFirstYear = ({navigation, route}: MyProps) => {
   const {year} = route.params;
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -42,6 +45,7 @@ const ScoreFirstYear = ({navigation, route}: MyProps) => {
   }, [year]);
 
   const fetchScores = async (userId: string) => {
+    setLoading(true);
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
       const response = await fetch(
@@ -69,9 +73,18 @@ const ScoreFirstYear = ({navigation, route}: MyProps) => {
         throw new Error('API response is not an array');
       }
 
-      setSubjects(data);
+      const filteredData = data.filter(
+        subjectData =>
+          parseFloat(subjectData.semester1Average) !== -1 ||
+          parseFloat(subjectData.semester2Average) !== -1 ||
+          parseFloat(subjectData.yearAverage) !== -1,
+      );
+
+      setSubjects(filteredData);
     } catch (error) {
       console.error('Error fetching scores data', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,28 +92,59 @@ const ScoreFirstYear = ({navigation, route}: MyProps) => {
     navigation.navigate('DetailScoreFirstYearOne', {year, subject});
   };
 
+  // const renderSubjectComponents = () => {
+  //   return subjects.map((subjectData, index) => (
+  //     <TouchableOpacityComponent
+  //       key={index}
+  //       imageSource={parseFloat(subjectData.yearAverage)} // Đường dẫn đến icon
+  //       subject={subjectData.subject}
+  //       semester1Average={parseFloat(subjectData.semester1Average)}
+  //       semester2Average={parseFloat(subjectData.semester2Average)}
+  //       yearAverage={parseFloat(subjectData.yearAverage)}
+  //       onPress={() => handleSubjectPress(subjectData.subject)}
+  //     />
+  //   ));
+  // };
   const renderSubjectComponents = () => {
     return subjects.map((subjectData, index) => (
       <TouchableOpacityComponent
         key={index}
-        imageSource={parseFloat(subjectData.yearAverage)} // Đường dẫn đến icon
+        imageSource={parseFloat(subjectData.yearAverage)} // Cập nhật đường dẫn icon
         subject={subjectData.subject}
-        semester1Average={parseFloat(subjectData.semester1Average)}
-        semester2Average={parseFloat(subjectData.semester2Average)}
-        yearAverage={parseFloat(subjectData.yearAverage)}
+        semester1Average={subjectData.semester1Average}
+        semester2Average={subjectData.semester2Average}
+        yearAverage={subjectData.yearAverage}
         onPress={() => handleSubjectPress(subjectData.subject)}
       />
     ));
   };
 
-  return <View style={styles.container}>{renderSubjectComponents()}</View>;
+  return (
+    <View style={styles.containerMain}>
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={colors.primaryColor} />
+        </View>
+      ) : (
+        <ScrollView style={styles.container}>
+          {renderSubjectComponents()}
+        </ScrollView>
+      )}
+    </View>
+  );
 };
 
 export default ScoreFirstYear;
 
 const styles = StyleSheet.create({
+  containerMain: {flex: 1, width: '100%', justifyContent: 'center'},
   container: {
     flex: 1,
+  },
+  loaderContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });
 

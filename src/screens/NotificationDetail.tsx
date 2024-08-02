@@ -39,6 +39,12 @@ const NotificationDetail = ({route, navigation}) => {
         </View>
 
         <ScrollView style={styles.scrollView}>
+          <View>
+            <Image
+              source={{uri: notification.thumbnail}}
+              style={styles.thumbnail}
+            />
+          </View>
           <RenderHTML
             contentWidth={Dimensions.get('window').width - 20} // Adjust the width as needed
             source={{html: notification.content}}
@@ -107,5 +113,11 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  thumbnail: {
+    width: '100%',
+    height: 200,
+    marginBottom: 20,
+    borderRadius: 10,
   },
 });

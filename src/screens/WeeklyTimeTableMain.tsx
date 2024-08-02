@@ -1,3 +1,4 @@
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,18 +7,13 @@ import {
   Text,
   Alert,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {RootNavigationProps} from './types';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import Notification from './Notification';
-import ScoreFirstYear from './ScoreFirstYear';
-import ScoreSecondYear from './ScoreSecondYear';
-import {colors} from '../assets/css/colors';
-import ScoreThirdYear from './ScoreThirdYear';
-import ScoreFourthYear from './ScoreFourthYear';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {colors} from '../assets/css/colors';
+import {RootNavigationProps} from './types';
 import WeeklyTimeTable from './WeeklyTimeTable';
+import {TabProvider, useTab} from '../components/TabContext';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -26,66 +22,98 @@ interface MyProps {
   route: any;
 }
 
-const WeeklyTimeTableMain = ({navigation, route}: MyProps) => {
+const WeeklyTimeTableMain: React.FC<MyProps> = ({navigation, route}) => {
   const [schoolYears, setSchoolYears] = useState<string[]>([]);
+  const {setCurrentTab, currentTab} = useTab();
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
+
+  const fetchSchoolYears = useCallback(async () => {
+    try {
+      const schoolYearsString = await AsyncStorage.getItem('userSchoolYears');
+      console.log('WMAIN: ' + schoolYearsString);
+      if (schoolYearsString) {
+        const schoolYearsArray = JSON.parse(schoolYearsString);
+        setSchoolYears(schoolYearsArray);
+        console.log('WMAIN: ' + schoolYearsArray);
+        if (schoolYearsArray.length > 0 && !currentTab) {
+          setCurrentTab(schoolYearsArray[0]);
+          console.log('WMAIN: ' + schoolYearsArray[0]);
+        }
+      } else {
+        Alert.alert('Error', 'No school years data found');
+      }
+    } catch (error) {
+      console.error('Error fetching school years', error);
+      Alert.alert('Error', 'An error occurred while fetching school years');
+    }
+  }, [currentTab, setCurrentTab]);
 
   useEffect(() => {
-    const fetchSchoolYears = async () => {
-      try {
-        const schoolYearsString = await AsyncStorage.getItem('userSchoolYears');
-        if (schoolYearsString) {
-          setSchoolYears(JSON.parse(schoolYearsString));
-        } else {
-          Alert.alert('Error', 'No school years data found');
-        }
-      } catch (error) {
-        console.error('Error fetching school years', error);
-        Alert.alert('Error', 'An error occurred while fetching school years');
-      }
-    };
-
     fetchSchoolYears();
-  }, []);
 
-  // useEffect(() => {
-  //   navigation.setOptions({
-  //     title: 'Thời khóa biểu',
-  //     headerLeft: () => (
-  //       <TouchableOpacity onPress={() => navigation.goBack()}>
-  //         <Image
-  //           style={styles.imge}
-  //           source={require('../assets/images/icons/Back.png')}
-  //         />
-  //       </TouchableOpacity>
-  //     ),
-  //   });
-  // }, [navigation]);
+    navigation.setOptions({
+      title: 'Thời khóa biểu',
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Image
+            style={styles.imge}
+            source={require('../assets/images/icons/Back.png')}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [fetchSchoolYears, navigation]);
+
+  useEffect(() => {
+    fetchSchoolYears();
+  }, [fetchSchoolYears]);
+
+  useEffect(() => {
+    if (route.name !== 'WeeklyTimeTableMain') {
+      navigation.setOptions({
+        headerShown: false, // Ẩn header khi điều hướng từ Drawer.Navigator
+      });
+    }
+  }, [navigation, route.name]);
 
   const renderTabs = () => {
     return schoolYears.map((year, index) => (
       <Tab.Screen
         key={index}
         name={`Year${index}`}
-        component={WeeklyTimeTable} // Change this to the relevant component for each year
+        component={WeeklyTimeTable}
         initialParams={{year}}
+        listeners={{
+          focus: () => {
+            setCurrentTab(year);
+            if (!initialLoad) {
+              fetchSchoolYears();
+            }
+          },
+        }}
         options={{
           tabBarLabel: ({focused}) => (
             <View style={[styles.tabItem, focused && styles.tabItemFocused]}>
-              <Text style={{color: focused ? 'white' : 'black'}}>{year}</Text>
+              <Text
+                style={{
+                  color: focused ? 'white' : 'black',
+                  fontWeight: 'bold',
+                }}>
+                {year}
+              </Text>
             </View>
           ),
         }}
       />
     ));
   };
+
+  useEffect(() => {
+    setInitialLoad(false); // Set initialLoad to false after the first load
+  }, []);
+
   return (
     <View style={{flex: 1, backgroundColor: colors.whiteColor}}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          // padding: 10,
-        }}></View>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
@@ -98,27 +126,28 @@ const WeeklyTimeTableMain = ({navigation, route}: MyProps) => {
       </View>
       {schoolYears.length > 0 ? (
         <Tab.Navigator
+          initialRouteName={schoolYears.length > 0 ? `Year0` : undefined}
           screenOptions={{
             tabBarScrollEnabled: true,
             tabBarItemStyle: {
-              marginHorizontal: 2, // Khoảng cách giữa các tab
-              borderRadius: 10, // Bo góc cho mỗi tab
+              marginHorizontal: 2,
+              borderRadius: 10,
               width: 120,
             },
             tabBarStyle: {
-              backgroundColor: '#F2F2F2', // Màu nền của thanh tab
+              backgroundColor: '#F2F2F2',
               elevation: 0,
             },
             tabBarLabelStyle: {
               fontWeight: 'bold',
-              fontSize: 15, // Kích thước chữ
-              textTransform: 'none', // Không viết hoa chữ
+              fontSize: 15,
+              textTransform: 'none',
             },
             tabBarIndicatorStyle: {
-              height: 0, // Loại bỏ chỉ báo của tab được chọn
+              height: 0,
             },
-            tabBarActiveTintColor: 'orange', // Màu của tab được chọn
-            tabBarInactiveTintColor: 'black', // Màu của tab không được chọn
+            tabBarActiveTintColor: 'orange',
+            tabBarInactiveTintColor: 'black',
           }}>
           {renderTabs()}
         </Tab.Navigator>
@@ -131,7 +160,15 @@ const WeeklyTimeTableMain = ({navigation, route}: MyProps) => {
   );
 };
 
-export default WeeklyTimeTableMain;
+const WrappedWeeklyTimeTableMain: React.FC<MyProps> = props => {
+  return (
+    <TabProvider>
+      <WeeklyTimeTableMain {...props} />
+    </TabProvider>
+  );
+};
+
+export default WrappedWeeklyTimeTableMain;
 
 const styles = StyleSheet.create({
   headerTitle: {

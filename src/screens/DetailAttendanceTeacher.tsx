@@ -14,11 +14,12 @@ import CircularProgressComponent from '../components/CircularProgressComponent';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootNavigationProps} from './types';
+import Loader from '../components/Loader';
 
 interface MyProps {
   navigation: StackNavigationProp<
     RootNavigationProps,
-    'DetailAttendanceSubject'
+    'DetailAttendanceTeacher'
   >;
   route: RouteProp<
     {params: {year: string; semesterId: number; title: string}},
@@ -27,15 +28,15 @@ interface MyProps {
 }
 
 interface Attendance {
-  attendenceID: string;
-  studentID: string;
-  studentName: string;
+  scheduleID: string;
+  teacherID: string;
+  teacherName: string;
   avatar: string;
+  classname: string;
   present: boolean;
   date: string;
   subject: string;
   status: string;
-  teacher: string;
   slot: number;
 }
 
@@ -52,7 +53,7 @@ interface UserClasses {
   }[];
 }
 
-const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
+const DetailAttendanceTeacher = ({route, navigation}: MyProps) => {
   const {title, year} = route.params;
 
   const [attendanceSubject, setAttendanceSubject] = useState<Attendance[]>([]);
@@ -67,7 +68,7 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         const response = await fetch(
-          `https://orbapi.click/api/Attendance/GetAttendanceByStudent?studentID=${userId}&subjectName=${title}&schoolYear=${year}`,
+          `https://orbapi.click/api/Attendance/GetAttendanceByTeacher?teacherID=${userId}&schoolYear=${year}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -119,22 +120,21 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
     fetchUserIdAndClasses();
   }, [title, year]);
 
+  // const getTotalAbsent = () => {
+  //   return getTotalAbsentNo() + getTotalAbsentYes();
+  // };
+
   const getTotalAbsent = () => {
-    return getTotalAbsentNo() + getTotalAbsentYes();
-  };
-
-  const getTotalAbsentNo = () => {
     return attendanceSubject
-      ? attendanceSubject.filter(item => item.status === 'Vắng không phép')
-          .length
+      ? attendanceSubject.filter(item => item.status === 'Vắng').length
       : 0;
   };
 
-  const getTotalAbsentYes = () => {
-    return attendanceSubject
-      ? attendanceSubject.filter(item => item.status === 'Vắng có phép').length
-      : 0;
-  };
+  // const getTotalAbsentYes = () => {
+  //   return attendanceSubject
+  //     ? attendanceSubject.filter(item => item.status === 'Vắng có phép').length
+  //     : 0;
+  // };
 
   const getTotalPresent = () => {
     return attendanceSubject
@@ -149,7 +149,7 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
   };
 
   const getTotalPresentAndAbsent = () => {
-    return getTotalPresent() + getTotalAbsentNo();
+    return getTotalPresent() + getTotalAbsent();
   };
 
   const getAttendanceRate = () => {
@@ -161,20 +161,9 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
 
   return (
     <View style={styles.main}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            style={styles.imge}
-            source={require('../assets/images/icons/Back.png')}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chi tiết điểm danh môn học</Text>
-        <View style={{flex: 1}} />
-      </View>
-
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <Text style={styles.textTitle}>{title}</Text>
+          <Text style={styles.textTitle}>{userId}</Text>
         </View>
         <View style={styles.centeredContainer}>
           <View style={styles.notificationDetailss}>
@@ -184,14 +173,14 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
 
             <View style={styles.column}>
               <Text style={[styles.textNofi, {fontWeight: 'bold'}]}>
-                Lớp: {className}
+                Tỉ lệ có mặt
               </Text>
               <Text
                 style={[
                   styles.textNofi,
                   {color: colors.primaryColor, fontWeight: 'bold'},
                 ]}>
-                Tỉ lệ: {getTotalPresent()}/{getTotalPresentAndAbsent()}
+                {getTotalPresent()}/{getTotalPresentAndAbsent()}
               </Text>
             </View>
           </View>
@@ -200,7 +189,7 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
           <View
             style={[
               styles.column,
-              {alignItems: 'flex-start', paddingLeft: 50},
+              {alignItems: 'flex-start', paddingLeft: 10},
             ]}>
             <View style={styles.presentRow}>
               <View style={styles.presentContainer}>
@@ -209,6 +198,17 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
                 </Text>
               </View>
               <Text style={styles.textNofi}> Có mặt</Text>
+            </View>
+          </View>
+          <View
+            style={[styles.column, {alignItems: 'flex-start', paddingLeft: 0}]}>
+            <View style={styles.presentRow}>
+              <View style={styles.absentContainer}>
+                <Text style={[styles.presentText, {color: 'white'}]}>
+                  {getTotalAbsent()}
+                </Text>
+              </View>
+              <Text style={styles.textNofi}> Vắng</Text>
             </View>
           </View>
           <View
@@ -223,33 +223,24 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
             </View>
           </View>
         </View>
-        <View style={[styles.notificationDetails, {marginBottom: 15}]}>
+        {/* <View style={[styles.notificationDetails, {marginBottom: 15}]}>
           <View
             style={[
               styles.column,
               {alignItems: 'flex-start', paddingLeft: 50},
-            ]}>
-            <View style={styles.presentRow}>
-              <View style={styles.absentContainerYes}>
-                <Text style={[styles.presentText, {color: 'white'}]}>
-                  {getTotalAbsentYes()}
-                </Text>
-              </View>
-              <Text style={styles.textNofi}> Vắng có phép</Text>
-            </View>
-          </View>
+            ]}></View>
           <View
             style={[styles.column, {alignItems: 'flex-start', paddingLeft: 0}]}>
             <View style={styles.presentRow}>
               <View style={styles.absentContainer}>
                 <Text style={[styles.presentText, {color: 'white'}]}>
-                  {getTotalAbsentNo()}
+                  {getTotalAbsent()}
                 </Text>
               </View>
-              <Text style={styles.textNofi}> Vắng không phép</Text>
+              <Text style={styles.textNofi}> Vắng</Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         <ScrollView style={styles.scrollView}>
           {loading ? ( // Show loader when loading
@@ -264,10 +255,10 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
                     Ngày: {item.date} - Tiết: {item.slot}
                   </Text>
                   <Text style={styles.teacherText}>
-                    Giáo viên: {item.teacher}
+                    Môn: {item.subject} - Lớp: {item.classname}
                   </Text>
                 </View>
-                {item.status === 'Vắng không phép' && (
+                {item.status === 'Vắng' && (
                   <Image
                     source={require('../assets/images/icons/wrong.png')}
                     style={styles.avatarImage}
@@ -307,24 +298,9 @@ const DetailAttendanceSubject = ({route, navigation}: MyProps) => {
   );
 };
 
-export default DetailAttendanceSubject;
+export default DetailAttendanceTeacher;
 
 const styles = StyleSheet.create({
-  imgeNoData: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 15,
-  },
-  nodata: {
-    width: 310,
-    height: 310,
-    borderRadius: 25,
-  },
-  loaderContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -398,7 +374,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    height: '75%',
+    height: '85%',
     padding: 17,
     backgroundColor: 'white',
     // marginVertical: 20,
@@ -418,7 +394,7 @@ const styles = StyleSheet.create({
   },
   notificationDetails: {
     flexDirection: 'row',
-    // marginBottom: 15,
+    marginBottom: 8,
     marginTop: 15,
   },
   notificationDetailss: {
@@ -455,5 +431,26 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+  },
+  imgeNoData: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 15,
+  },
+  nodata: {
+    width: 310,
+    height: 310,
+    borderRadius: 25,
+  },
+  noDataText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: 'gray',
+  },
+  loaderContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });

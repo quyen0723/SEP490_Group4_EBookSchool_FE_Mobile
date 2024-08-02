@@ -14,9 +14,9 @@ import {blue400} from 'react-native-paper/lib/typescript/styles/themes/v2/colors
 interface TouchableOpacityComponentProps {
   imageSource: ImageSourcePropType;
   subject: string;
-  semester1Average: number;
-  semester2Average: number;
-  yearAverage: number;
+  semester1Average: string;
+  semester2Average: string;
+  yearAverage: string;
   onPress: () => void;
 }
 
@@ -28,11 +28,30 @@ const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
   yearAverage,
   onPress,
 }) => {
+  const parseAverage = (average: string): number | string => {
+    if (average === 'Đ') return 10;
+    if (average === 'CĐ') return 0;
+    if (average === '-1') return average;
+    return parseFloat(average);
+  };
+
+  const renderAverage = (average: string): string => {
+    if (average === 'Đ') return 'Đ';
+    if (average === 'CĐ') return 'CĐ';
+    if (average === '-1') return '0.00';
+    return parseFloat(average).toFixed(2);
+  };
+
+  const parsedYearAverage = parseAverage(yearAverage);
   return (
     <TouchableOpacity style={styles.touchable} onPress={onPress}>
       <View style={styles.imageContainer}>
         <View style={{width: 20, height: 20}}>
-          <CircularProgressComponent value={yearAverage * 10} />
+          <CircularProgressComponent
+            value={
+              typeof parsedYearAverage === 'number' ? parsedYearAverage * 10 : 0
+            }
+          />
         </View>
       </View>
       <View style={styles.textContainer}>
@@ -46,13 +65,13 @@ const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
         <View style={styles.row}>
           <Text style={styles.text}>
             <Text style={[styles.text, {fontWeight: 'bold'}]}>Học kỳ I: </Text>
-            {semester1Average}
+            {renderAverage(semester1Average)}
           </Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.text}>
             <Text style={[styles.text, {fontWeight: 'bold'}]}>Học kỳ II: </Text>
-            {semester2Average}
+            {renderAverage(semester2Average)}
           </Text>
           <Text
             style={[
@@ -64,7 +83,7 @@ const TouchableOpacityComponent: React.FC<TouchableOpacityComponentProps> = ({
               },
             ]}>
             <Text style={[styles.text, {fontWeight: 'bold'}]}>Cả năm: </Text>
-            {yearAverage}
+            {renderAverage(yearAverage)}
           </Text>
         </View>
       </View>

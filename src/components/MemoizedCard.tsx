@@ -1,17 +1,17 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import {Card} from 'react-native-paper';
 import {colors} from '../assets/css/colors';
 
 type Item = {
   name: string;
-  slotTime: string; // Thêm slotTime vào kiểu dữ liệu Item
-  teacher: string;
+  slotTime: string;
+  teacherOrClassroom: string; // Cập nhật để chứa thông tin giáo viên hoặc lớp học
   slot: string;
   status: string;
   numberOfSlotsWithData?: number;
-  // height: number;
 };
+
 interface MemoizedCardProps {
   item: Item;
 }
@@ -59,7 +59,7 @@ const MemoizedCard: React.FC<MemoizedCardProps> = React.memo(({item}) => {
                   fontWeight: 'bold',
                   fontStyle: 'italic',
                 }}>
-                {item.teacher}
+                {item.teacherOrClassroom} {/* Sử dụng thuộc tính cập nhật */}
               </Text>
             </View>
             <View style={{flex: 3, alignItems: 'center'}}>

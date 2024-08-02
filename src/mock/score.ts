@@ -1,9 +1,9 @@
-interface ScoreDetail {
+export interface ScoreDetail {
   key: string;
   value: number;
 }
 
-interface StudentScore {
+export interface StudentScore {
   id: number;
   fullName: string;
   average: number;
@@ -13,7 +13,7 @@ interface StudentScore {
   detailScores: ScoreDetail[];
 }
 
-interface ScoreByStudentsBySubjectsData {
+export interface ScoreByStudentsBySubjectsData {
   class: string;
   schoolYear: string;
   teacher: string;
@@ -21,7 +21,7 @@ interface ScoreByStudentsBySubjectsData {
   scores: StudentScore[];
 }
 
-interface CustomScoreDetail {
+export interface CustomScoreDetail {
   key: string;
   value: number;
 }

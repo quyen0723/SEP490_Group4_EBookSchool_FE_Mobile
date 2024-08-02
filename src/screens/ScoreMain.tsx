@@ -17,6 +17,7 @@ import {colors} from '../assets/css/colors';
 import ScoreThirdYear from './ScoreThirdYear';
 import ScoreFourthYear from './ScoreFourthYear';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Loader from '../components/Loader';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -27,9 +28,11 @@ interface MyProps {
 
 const ScoreMain = ({navigation, route}: MyProps) => {
   const [schoolYears, setSchoolYears] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchSchoolYears = async () => {
+      setLoading(true);
       try {
         const schoolYearsString = await AsyncStorage.getItem('userSchoolYears');
         if (schoolYearsString) {
@@ -40,6 +43,8 @@ const ScoreMain = ({navigation, route}: MyProps) => {
       } catch (error) {
         console.error('Error fetching school years', error);
         Alert.alert('Error', 'An error occurred while fetching school years');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -70,7 +75,13 @@ const ScoreMain = ({navigation, route}: MyProps) => {
         options={{
           tabBarLabel: ({focused}) => (
             <View style={[styles.tabItem, focused && styles.tabItemFocused]}>
-              <Text style={{color: focused ? 'white' : 'black'}}>{year}</Text>
+              <Text
+                style={{
+                  color: focused ? 'white' : 'black',
+                  fontWeight: 'bold',
+                }}>
+                {year}
+              </Text>
             </View>
           ),
         }}
@@ -113,7 +124,7 @@ const ScoreMain = ({navigation, route}: MyProps) => {
         </Tab.Navigator>
       ) : (
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>Loading...</Text>
+          <Loader visible={loading} />
         </View>
       )}
     </View>

@@ -6,13 +6,14 @@
  */
 
 import {createStackNavigator} from '@react-navigation/stack';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import type {PropsWithChildren} from 'react';
-import {View} from 'react-native';
+import {ActivityIndicator, View} from 'react-native';
 
 import AppNavigator from './src/navigations/AppNavigator';
 import ExampleTable from './src/screens/ExampleTable';
 import DropdownComponent from './src/components/DropdownComponent';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type RootStackParamsList = {
   Home: undefined;
@@ -23,7 +24,39 @@ export type RootStackParamsList = {
 };
 
 const Stack = createStackNavigator<RootStackParamsList>();
+
 const App = () => {
+  const [loading, setLoading] = useState(true);
+  const [initialRoute, setInitialRoute] = useState('Login');
+
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const loginTimestamp = await AsyncStorage.getItem('loginTimestamp');
+
+      if (accessToken && loginTimestamp) {
+        const now = new Date().getTime();
+        const loginTime = parseInt(loginTimestamp, 10);
+        const twoDaysInMilliseconds = 2 * 24 * 60 * 60 * 1000;
+
+        if (now - loginTime <= twoDaysInMilliseconds) {
+          setInitialRoute('HomeMain');
+        }
+      }
+      setLoading(false);
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     // <NavigationContainer>
     //   <Stack.Navigator>
@@ -32,9 +65,9 @@ const App = () => {
     //   </Stack.Navigator>
     // </NavigationContainer>
     <View style={{flex: 1}}>
-      {/* <AppNavigator /> */}
+      <AppNavigator initialRouteName={initialRoute} />
 
-      <DropdownComponent />
+      {/* <DropdownComponent /> */}
       {/* <ExampleTable /> */}
     </View>
   );

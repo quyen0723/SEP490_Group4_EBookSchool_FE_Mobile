@@ -11,7 +11,6 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RouteProp} from '@react-navigation/native';
 import {RootNavigationProps} from './types';
 import {colors} from '../assets/css/colors';
-import {scoreByStudent} from '../mock/score';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface DetailScoreFirstYearOneProps {
@@ -19,19 +18,18 @@ interface DetailScoreFirstYearOneProps {
     RootNavigationProps,
     'DetailScoreFirstYearOne'
   >;
-  // route: RouteProp<RootNavigationProps, 'DetailScoreFirstYearOne'>;
-  route: RouteProp<{params: {year: string; subject: number}}, 'params'>;
+  route: RouteProp<{params: {year: string; subject: string}}, 'params'>;
 }
 
 interface Score {
   key: string;
-  value: number;
+  value: string;
   semester: string;
 }
 
 interface Subject {
   subject: string;
-  average: number;
+  average: string;
   scores: Score[];
 }
 
@@ -48,17 +46,15 @@ const DetailScoreFirstYearOne = ({
 }: DetailScoreFirstYearOneProps) => {
   const {year, subject} = route.params;
 
-  // // Tìm kiếm thông tin của học kỳ có ID tương ứng
-  // const selectedSemester = scoreByStudent.data.find(
-  //   semester => semester.id === semesterId,
-  // );
-
   const [studentScores, setStudentScores] = useState<StudentScores | null>(
     null,
   );
-  const [studentScoresValue, setStudentScoresValue] =
-    useState<StudentScores | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [gpa, setGpa] = useState<{
+    gpaSemester1: string;
+    gpaSemester2: string;
+    gpaYear: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchScores = async (userId: string) => {
@@ -76,6 +72,7 @@ const DetailScoreFirstYearOne = ({
         console.log('Data fetched from API:', JSON.stringify(data, null, 2));
         if (data) {
           setStudentScores(data);
+          calculateGPA(data.details);
         } else {
           console.error('Error:', data.message);
         }
@@ -100,7 +97,137 @@ const DetailScoreFirstYearOne = ({
 
     fetchUserId();
   }, [year, subject]);
-  // console.log('AAAAAAAAAA', studentScores?.details.scores);
+
+  const handleCalculate = () => {
+    if (studentScores) {
+      navigation.navigate('Calculate', {scores: studentScores});
+    }
+  };
+
+  const calculateGPA = (details: Subject[]) => {
+    let totalScoreSemester1 = 0;
+    let totalScoreSemester2 = 0;
+    let subjectCountSemester1 = 0;
+    let subjectCountSemester2 = 0;
+    let hasSpecialGradeSemester1 = false;
+    let hasSpecialGradeSemester2 = false;
+
+    details.forEach(subject => {
+      const scoresSemester1 = subject.scores.filter(
+        score => score.semester === 'Học kỳ I' && score.value !== '',
+      );
+      const scoresSemester2 = subject.scores.filter(
+        score => score.semester === 'Học kỳ II' && score.value !== '',
+      );
+
+      const calculateSubjectAverage = (scores: Score[]) => {
+        let totalScore = 0;
+        let count = 0;
+        let hasSpecialGrade = false;
+
+        const hs1Scores = scores.filter(
+          score =>
+            (score.key === 'Miệng' || score.key === '15p') &&
+            score.value !== '',
+        );
+        const hs2Scores = scores.filter(
+          score => score.key === '1 Tiết' && score.value !== '',
+        );
+        const finalScores = scores.filter(
+          score => score.key === 'Cuối kỳ' && score.value !== '',
+        );
+
+        hs1Scores.forEach(score => {
+          if (score.value === 'Đ' || score.value === 'CĐ') {
+            hasSpecialGrade = true;
+          } else {
+            totalScore += parseFloat(score.value);
+            count += 1;
+          }
+        });
+
+        hs2Scores.forEach(score => {
+          if (score.value === 'Đ' || score.value === 'CĐ') {
+            hasSpecialGrade = true;
+          } else {
+            totalScore += parseFloat(score.value) * 2;
+            count += 2;
+          }
+        });
+
+        finalScores.forEach(score => {
+          if (score.value === 'Đ' || score.value === 'CĐ') {
+            hasSpecialGrade = true;
+          } else {
+            totalScore += parseFloat(score.value) * 3;
+            count += 3;
+          }
+        });
+
+        return hasSpecialGrade ? 'Đ' : count === 0 ? 0 : totalScore / count;
+      };
+
+      const avgSemester1 = calculateSubjectAverage(scoresSemester1);
+      const avgSemester2 = calculateSubjectAverage(scoresSemester2);
+
+      if (avgSemester1 === 'Đ') {
+        hasSpecialGradeSemester1 = true;
+      } else if (avgSemester1) {
+        totalScoreSemester1 += avgSemester1 as number;
+        subjectCountSemester1 += 1;
+      }
+
+      if (avgSemester2 === 'Đ') {
+        hasSpecialGradeSemester2 = true;
+      } else if (avgSemester2) {
+        totalScoreSemester2 += avgSemester2 as number;
+        subjectCountSemester2 += 1;
+      }
+    });
+
+    const gpaSemester1 =
+      subjectCountSemester1 === 0
+        ? 0
+        : totalScoreSemester1 / subjectCountSemester1;
+    const gpaSemester2 =
+      subjectCountSemester2 === 0
+        ? 0
+        : totalScoreSemester2 / subjectCountSemester2;
+
+    if (hasSpecialGradeSemester1 || hasSpecialGradeSemester2) {
+      setGpa({
+        gpaSemester1: hasSpecialGradeSemester1 ? 'Đ' : gpaSemester1.toFixed(2),
+        gpaSemester2: hasSpecialGradeSemester2 ? 'Đ' : gpaSemester2.toFixed(2),
+        gpaYear: '0.00',
+      });
+    } else {
+      const gpaYear = (gpaSemester1 + gpaSemester2) / 2;
+      setGpa({
+        gpaSemester1: gpaSemester1.toFixed(2),
+        gpaSemester2: gpaSemester2.toFixed(2),
+        gpaYear: gpaYear.toFixed(2),
+      });
+    }
+  };
+
+  const groupScoresBySemester = (scores: Score[]) => {
+    const grouped: {[semester: string]: {[key: string]: string[]}} = {};
+
+    scores.forEach(score => {
+      if (score.value !== '-1') {
+        if (!grouped[score.semester]) {
+          grouped[score.semester] = {};
+        }
+        if (!grouped[score.semester][score.key]) {
+          grouped[score.semester][score.key] = [];
+        }
+        grouped[score.semester][score.key].push(score.value);
+      }
+    });
+
+    return grouped;
+  };
+
   return (
     <View style={styles.main}>
       {/* Header */}
@@ -122,21 +249,21 @@ const DetailScoreFirstYearOne = ({
         <View style={[styles.row, {paddingHorizontal: 20}]}>
           <Text style={[styles.semesterIdText, {fontWeight: 'normal'}]}>
             <Text style={[styles.semesterIdText, {fontWeight: 'bold'}]}>
-              TBCM:{' '}
+              Học kỳ I:{' '}
             </Text>
-            {/* {selectedSemester?.average} */}
+            {gpa?.gpaSemester1 === 'Đ' ? 'Đ' : gpa?.gpaSemester1}
           </Text>
           <Text style={[styles.semesterIdText, {fontWeight: 'normal'}]}>
             <Text style={[styles.semesterIdText, {fontWeight: 'bold'}]}>
-              Hạnh kiểm:{' '}
+              Học kỳ II:{' '}
             </Text>
-            {/* {selectedSemester?.conduct} */}
+            {gpa?.gpaSemester2 === 'Đ' ? 'Đ' : gpa?.gpaSemester2}
           </Text>
           <Text style={[styles.semesterIdText, {fontWeight: 'normal'}]}>
             <Text style={[styles.semesterIdText, {fontWeight: 'bold'}]}>
-              Hạng:{' '}
+              Cả năm:{' '}
             </Text>
-            {/* {selectedSemester?.rank} */}
+            {gpa?.gpaYear}
           </Text>
         </View>
         <ScrollView
@@ -148,27 +275,31 @@ const DetailScoreFirstYearOne = ({
                 <View key={index} style={styles.subjectContainer}>
                   <Text style={styles.subjectText}>{subjectScore.subject}</Text>
                   {(() => {
-                    // Tạo một đối tượng để lưu trữ các giá trị theo key
-                    const groupedDetails: {[key: string]: number[]} = {};
-                    subjectScore.scores.forEach(detail => {
-                      if (!groupedDetails[detail.key]) {
-                        groupedDetails[detail.key] = [];
-                      }
-                      groupedDetails[detail.key].push(detail.value);
-                    });
+                    const groupedScores = groupScoresBySemester(
+                      subjectScore.scores,
+                    );
 
-                    // Chuyển đổi đối tượng thành một mảng để render
-                    return Object.keys(groupedDetails).map(
-                      (key, detailIndex) => (
-                        <View key={detailIndex}>
-                          <View style={styles.detailContainer}>
-                            <Text style={styles.keyText}>{key}:</Text>
-                            <Text style={styles.keyValueText}>
-                              {groupedDetails[key].join('   ')}
-                            </Text>
-                          </View>
-                          {detailIndex <
-                            Object.keys(groupedDetails).length - 1 && (
+                    return Object.keys(groupedScores).map(
+                      (semester, semesterIndex) => (
+                        <View key={semesterIndex}>
+                          <Text style={styles.semesterHeader}>{semester}</Text>
+                          {Object.keys(groupedScores[semester]).map(
+                            (key, detailIndex) => (
+                              <View key={detailIndex}>
+                                <View style={styles.detailContainer}>
+                                  <Text style={styles.keyText}>{key}:</Text>
+                                  <Text style={styles.keyValueText}>
+                                    {groupedScores[semester][key].join('   ')}
+                                  </Text>
+                                </View>
+                                {detailIndex <
+                                  Object.keys(groupedScores[semester]).length -
+                                    1 && <View style={styles.horizontalLine} />}
+                              </View>
+                            ),
+                          )}
+                          {semesterIndex <
+                            Object.keys(groupedScores).length - 1 && (
                             <View style={styles.horizontalLine} />
                           )}
                         </View>
@@ -179,7 +310,7 @@ const DetailScoreFirstYearOne = ({
                     <View style={styles.horizontalLine} />
                   )}
                   <View>
-                    <Text style={styles.titleEvaluate}>Nhận xét:</Text>
+                    {/* <Text style={styles.titleEvaluate}>Nhận xét:</Text> */}
                     <Text style={styles.titleEvaluateDetail}>
                       {/* {selectedSemester?.note} */}
                     </Text>
@@ -189,6 +320,11 @@ const DetailScoreFirstYearOne = ({
             )}
         </ScrollView>
       </View>
+      <TouchableOpacity
+        style={styles.calculateButton}
+        onPress={handleCalculate}>
+        <Text style={styles.btnText}>Tính điểm</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -203,6 +339,13 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingTop: 16, // Add padding to avoid overlap with fixed content
+  },
+  semesterHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 5,
+    color: 'black',
+    paddingLeft: 10,
   },
   titleEvaluateDetail: {
     color: 'black',
@@ -307,6 +450,22 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  calculateButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 170,
+    backgroundColor: colors.primaryColor,
+    padding: 15,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  btnText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

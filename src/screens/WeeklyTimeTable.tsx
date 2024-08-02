@@ -13,7 +13,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Avatar, Card, useTheme} from 'react-native-paper';
 import {colors} from '../assets/css/colors';
-import {RouteProp, Theme} from '@react-navigation/native';
+import {RouteProp, Theme, useFocusEffect} from '@react-navigation/native';
 import {studentWeeklyTimeTableDates} from '../mock/weeklyTimeTable';
 import {
   Col,
@@ -24,6 +24,7 @@ import {
 } from 'react-native-table-component';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MemoizedCard from '../components/MemoizedCard';
+import {useTab} from '../components/TabContext';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
   route: RouteProp<{params: {year: string; semesterId: number}}, 'params'>;
@@ -32,7 +33,7 @@ interface MyProps {
 type Item = {
   name: string;
   slotTime: string; // Thêm slotTime vào kiểu dữ liệu Item
-  teacher: string;
+  teacherOrClassroom: string;
   slot: string;
   status: string;
   numberOfSlotsWithData?: number;
@@ -84,9 +85,10 @@ const timeToString = (time: number): string => {
   return date.toISOString().split('T')[0];
 };
 
-const WeeklyTimeTable = ({navigation, route}: MyProps) => {
+const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   // const [monday, setMonday] = useState(getFormattedMondayOfWeek(new Date()));
   const {year} = route.params;
+  const {currentTab} = useTab(); // Use currentTab from useTab
   const [monday, setMonday] = useState(
     getFormattedDate(getMondayOfCurrentWeek()),
   );
@@ -99,7 +101,9 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
   const [fromDatee, setFromDatee] = useState<string | null>();
   const [toDatee, setToDatee] = useState<string | null>();
   const [classData, setClassData] = useState<string | null>();
+  const [teacherData, setTeacherData] = useState<string | null>();
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [items, setItems] = useState<Items>({});
   const [currentMonth, setCurrentMonth] = useState(getMondayOfCurrentWeek());
   const agendaRef = useRef(null);
@@ -108,52 +112,110 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
 
   const fetchTimeTable = useCallback(
     async (userId: string) => {
+      console.log('AAAAAAAAAAAAAAAAAAAAAAA');
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
-        const response = await fetch(
-          `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`,
-          {
+        const roles = JSON.parse(
+          (await AsyncStorage.getItem('userRoles')) || '[]',
+        );
+        let url = '';
+
+        if (roles.includes('Student')) {
+          url = `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+        } else if (
+          roles.includes('Subject Teacher') ||
+          roles.includes('Admin')
+        ) {
+          url = `https://orbapi.click/api/Schedules/SubjectTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+        } else if (roles.includes('HomeroomTeacher')) {
+          url = `https://orbapi.click/api/Schedules/HomeroomTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+        }
+        console.log('yeyyyyyyyy', year);
+        if (url) {
+          const response = await fetch(url, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          },
-        );
-        const timeTableData = await response.json();
-        console.log('Time table data:', timeTableData);
-        if (timeTableData) {
-          const processedItems = processTimeTableData(timeTableData);
-          setWeeklyTimeTable(timeTableData);
-          setItems(processedItems);
-          setFromDatee(timeTableData.fromDate);
-          setToDatee(timeTableData.toDate);
-          setClassData(timeTableData.class);
+          });
+          const textResponse = await response.text();
+          console.log('Response:', textResponse);
+
+          if (textResponse === 'Không tìm thấy lớp học') {
+            const emptyItems: Items = {};
+            const fromDate = new Date(monday.split('/').reverse().join('-'));
+            const toDate = new Date(fromDate);
+            toDate.setDate(fromDate.getDate() + 6);
+
+            for (
+              let date = fromDate;
+              date <= toDate;
+              date.setDate(date.getDate() + 1)
+            ) {
+              const strTime = timeToString(date.getTime());
+              emptyItems[strTime] = [
+                {
+                  name: 'Không tìm thấy lớp học',
+                  slotTime: '',
+                  teacherOrClassroom: '',
+                  slot: '',
+                  status: '',
+                },
+              ];
+            }
+            setItems(emptyItems);
+          } else {
+            const timeTableData = JSON.parse(textResponse);
+            console.log('Time table data:', timeTableData);
+
+            if (timeTableData) {
+              const processedItems = processTimeTableData(timeTableData, roles);
+              setWeeklyTimeTable(timeTableData);
+              setItems(processedItems);
+              setFromDatee(timeTableData.fromDate);
+              setToDatee(timeTableData.toDate);
+              setClassData(timeTableData.class);
+              setTeacherData(timeTableData.mainTeacher);
+            } else {
+              console.error('Received empty timetable data');
+            }
+          }
         } else {
-          // setError(timeTableData.message);
+          console.error('No valid role found for fetching timetable');
         }
       } catch (error) {
         console.error('Error fetching timetable data', error);
       }
     },
-    [monday],
+    [monday, year], // dependency array
   );
-
-  useEffect(() => {
-    const fetchUserId = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        if (storedUserId) {
-          setUserId(storedUserId);
-          fetchTimeTable(storedUserId);
-        } else {
-          console.error('No user ID found in AsyncStorage');
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserIdAndRoles = async () => {
+        try {
+          const storedUserId = await AsyncStorage.getItem('userId');
+          const roles = JSON.parse(
+            (await AsyncStorage.getItem('userRoles')) || '[]',
+          );
+          if (storedUserId) {
+            setUserId(storedUserId);
+            setUserRoles(roles);
+            if (currentTab === year) {
+              fetchTimeTable(storedUserId);
+            }
+          } else {
+            console.error('No user ID found in AsyncStorage');
+          }
+        } catch (error) {
+          console.error(
+            'Error fetching user ID or roles from AsyncStorage',
+            error,
+          );
         }
-      } catch (error) {
-        console.error('Error fetching user ID from AsyncStorage', error);
-      }
-    };
+      };
 
-    fetchUserId();
-  }, [fetchTimeTable]);
+      fetchUserIdAndRoles();
+    }, [fetchTimeTable, currentTab, year]),
+  );
 
   // useEffect(() => {
   //   navigation.setOptions({
@@ -170,8 +232,13 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
   // }, [navigation]);
 
   const processTimeTableData = useCallback(
-    (timeTableData: TimeTableData['data']): Items => {
+    (timeTableData: TimeTableData['data'], roles: string[]): Items => {
       const newItems: Items = {};
+      const isTeacherOrAdmin =
+        roles.includes('Subject Teacher') ||
+        roles.includes('Admin') ||
+        roles.includes('HomeroomTeacher');
+
       if (timeTableData.details) {
         timeTableData.details.forEach(detail => {
           const date = convertDateFormat(detail.date);
@@ -188,7 +255,7 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
               {
                 name: 'Không có tiết học cho ngày hôm nay',
                 slotTime: '',
-                teacher: '',
+                teacherOrClassroom: '',
                 slot: '',
                 status: '',
               },
@@ -197,7 +264,9 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
             newItems[date] = filteredSlots.map(slot => ({
               name: `Môn học: ${slot.subject}`,
               slotTime: slot.slotTime,
-              teacher: `Giáo viên: ${slot.teacher}`,
+              teacherOrClassroom: isTeacherOrAdmin
+                ? `Lớp: ${slot.classroom}`
+                : `Giáo viên: ${slot.teacher}`,
               slot: `${slot.slot}`,
               status: `${slot.status}`,
             }));
@@ -244,7 +313,7 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
                   newItems[strTime].push({
                     name: 'Không có tiết học cho ngày hôm nay',
                     slotTime: '',
-                    teacher: '',
+                    teacherOrClassroom: '',
                     slot: '',
                     status: '',
                   });
@@ -260,7 +329,9 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
                     .map(slot => ({
                       name: `Môn học: ${slot.subject}`,
                       slotTime: slot.slotTime,
-                      teacher: `Giáo viên: ${slot.teacher}`,
+                      teacherOrClassroom: userRoles.includes('Student')
+                        ? `Giáo viên: ${slot.teacher}`
+                        : `Lớp: ${slot.classroom}`,
                       slot: `${slot.slot}`,
                       status: `${slot.status}`,
                     }));
@@ -269,7 +340,7 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
                 newItems[strTime].push({
                   name: 'Không có tiết học cho ngày hôm nay',
                   slotTime: '',
-                  teacher: '',
+                  teacherOrClassroom: '',
                   slot: '',
                   status: '',
                 });
@@ -280,7 +351,7 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
         setItems(newItems);
       }, 1000);
     },
-    [fromDatee, toDatee, weeklyTimeTable, items, convertDateFormat],
+    [fromDatee, toDatee, weeklyTimeTable, items, convertDateFormat, userRoles],
   );
 
   const getSlotsForDay = (date: Date): any[] | null => {
@@ -345,11 +416,61 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
         index === 0 ||
         Object.keys(items)[index] !== Object.keys(items)[index - 1];
 
-      const tableContainerHeight = item.name.startsWith('Không có tiết học')
-        ? 20
-        : 70;
+      const tableContainerHeight =
+        item.name === ''
+          ? 70
+          : item.name.startsWith('Không có tiết học')
+          ? 20
+          : 70;
+      if (item.name === 'Không tìm thấy lớp học') {
+        return (
+          <View
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <TouchableOpacity
+              style={{
+                marginRight: 10,
+                marginTop: 17,
+                height: tableContainerHeight,
+              }}>
+              <Card>
+                <Card.Content>
+                  <Text>Không tìm thấy thời khóa biểu cho năm học này</Text>
+                </Card.Content>
+              </Card>
+            </TouchableOpacity>
+          </View>
+        );
+      }
 
-      if (item.name.startsWith('Không có tiết học')) {
+      if (item.name === '') {
+        return (
+          <>
+            {isFirstDayOfTheWeek && (
+              <View
+                style={{
+                  paddingTop: 50,
+                  marginRight: 10,
+                  borderBottomWidth: 2,
+                  borderBottomColor: 'gray',
+                  width: '20%',
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={{
+                marginRight: 10,
+                marginTop: 17,
+                height: tableContainerHeight,
+              }}>
+              <Card>
+                <Card.Content>
+                  <Text> </Text>
+                </Card.Content>
+              </Card>
+            </TouchableOpacity>
+          </>
+        );
+      } else if (item.name.startsWith('Không có tiết học')) {
         return (
           <>
             {isFirstDayOfTheWeek && (
@@ -405,7 +526,7 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
               />
             )}
             <MemoizedCard
-              key={item.slot + item.teacher + item.slotTime}
+              key={item.slot + item.teacherOrClassroom + item.slotTime}
               item={item}
             />
           </>
@@ -547,7 +668,9 @@ const WeeklyTimeTable = ({navigation, route}: MyProps) => {
   return (
     <View style={{flex: 1}}>
       <View style={styles.textCenter}>
-        <Text style={styles.textSemester}>{classData}</Text>
+        <Text style={styles.textSemester}>
+          {userRoles.includes('Student') ? classData : teacherData}
+        </Text>
       </View>
 
       {renderCalendarHeader()}
@@ -635,10 +758,12 @@ const styles = StyleSheet.create({
     color: colors.blackColor,
   },
   prevButton: {
+    paddingLeft: 10,
     fontSize: 20,
     fontWeight: 'bold',
   },
   nextButton: {
+    paddingRight: 10,
     fontSize: 20,
     fontWeight: 'bold',
   },

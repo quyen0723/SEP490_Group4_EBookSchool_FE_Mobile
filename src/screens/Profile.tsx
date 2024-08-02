@@ -4,27 +4,56 @@ import {User} from './types';
 import {colors} from '../assets/css/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Profile = ({route}: any) => {
-  const {userId} = route.params;
+const Profile = () => {
+  const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  console.log(userId);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserData = async () => {
       try {
-        const accessToken = await AsyncStorage.getItem('accessToken');
-        const res = await fetch(`https://orbapi.click/api/Students/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const data = await res.json();
-        if (data) {
-          setUser(data);
+        // Lấy userId và userRoles từ AsyncStorage
+        const storedUserId = await AsyncStorage.getItem('userId');
+        const roles = JSON.parse(
+          (await AsyncStorage.getItem('userRoles')) || '[]',
+        );
+
+        if (storedUserId) {
+          setUserId(storedUserId);
+          setUserRoles(roles);
+
+          // Xác định URL API dựa trên vai trò của người dùng
+          const isStudent = roles.includes('Student');
+          const apiUrl = isStudent
+            ? `https://orbapi.click/api/Students/${storedUserId}`
+            : `https://orbapi.click/api/Teachers/${storedUserId}`;
+
+          const accessToken = await AsyncStorage.getItem('accessToken');
+          console.log('Fetching user from API:', apiUrl);
+          console.log('Using access token:', accessToken);
+          console.log('User ID:', storedUserId);
+          console.log('Roles:', roles);
+
+          const res = await fetch(apiUrl, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          if (!res.ok) {
+            throw new Error(`Error: ${res.status} ${res.statusText}`);
+          }
+
+          const data = await res.json();
+          if (data) {
+            setUser(data);
+          } else {
+            setError(data.message);
+          }
         } else {
-          setError(data.message);
+          console.error('No user ID found in AsyncStorage');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -34,8 +63,8 @@ const Profile = ({route}: any) => {
       }
     };
 
-    fetchUser();
-  }, [userId]);
+    fetchUserData();
+  }, []);
 
   if (loading) {
     return (
@@ -44,6 +73,7 @@ const Profile = ({route}: any) => {
       </View>
     );
   }
+
   if (error) {
     return (
       <View style={styles.errorContainer}>
@@ -59,6 +89,10 @@ const Profile = ({route}: any) => {
       </View>
     );
   }
+
+  const getUserStatus = (id: string) => {
+    return id.startsWith('HS') ? 'Học sinh' : 'Giáo viên';
+  };
 
   return (
     <View style={styles.container}>
@@ -89,7 +123,7 @@ const Profile = ({route}: any) => {
           <View style={styles.userInfoTextContainer}>
             <Text style={styles.userInfoMainText}>{user.fullname}</Text>
             <Text style={styles.userInfoSubText}>
-              {user.id} - Trạng thái: {user.id}
+              {user.id} - Trạng thái: {getUserStatus(user.id)}
             </Text>
             <Text style={styles.userInfoSubText}>{user.email}</Text>
           </View>
@@ -114,22 +148,12 @@ const Profile = ({route}: any) => {
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Chỗ ở hiện tại: </Text>
-            {user.homeTown}
+            {user.address}
           </Text>
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Con liệt sĩ, thương binh: </Text>
             {user.isMartyrs}
           </Text>
-          {/* <View style={styles.userInfoRow}>
-            <Text style={styles.userInfoText}>
-              <Text style={styles.styleText}>Họ tên cha: </Text>
-              {user.namefather}
-            </Text>
-            <Text style={styles.userInfoText}>
-              <Text style={styles.styleText}>Nghề nghiệp: </Text>
-              {user.occupationfather}
-            </Text>
-          </View> */}
 
           <Text style={styles.userInfoText}>
             <Text style={styles.styleText}>Họ tên cha: </Text>
@@ -155,26 +179,7 @@ const Profile = ({route}: any) => {
             <Text style={styles.styleText}>Số điện thoại mẹ: </Text>
             {user.motherPhone}
           </Text>
-
-          {/* <Text style={styles.userInfoText}>
-            <Text style={styles.styleText}>Họ tên người giám hộ: </Text>
-            {user.nameGuardian}
-          </Text>
-          <Text style={styles.userInfoText}>
-            <Text style={styles.styleText}>Nghề nghiệp: </Text>
-            {user.occipationguardian}
-          </Text> */}
-
-          {/* <Text style={styles.userInfoText}>
-            <Text style={styles.styleText}></Text>
-            {user.nameGuardian}
-          </Text>
-          <Text style={styles.userInfoText}>
-            <Text style={styles.styleText}>Nghệ nghiệp: </Text>
-            {user.occipationguardian}
-          </Text> */}
         </View>
-        {/* Display other user information */}
       </View>
     </View>
   );
@@ -227,11 +232,7 @@ const styles = StyleSheet.create({
   },
   userInfoSubText: {
     fontSize: 12,
-    // color: 'gray',
     color: 'black',
-  },
-  boldText: {
-    fontWeight: 'bold',
   },
   styleText: {
     fontWeight: 'bold',

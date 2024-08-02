@@ -5,6 +5,7 @@ import {
   Image,
   Text,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -15,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {colors} from '../assets/css/colors';
 import TouchableOpacityAttendance from '../components/TouchableOpacityAttendance';
 import {RouteProp} from '@react-navigation/native';
+import Loader from '../components/Loader';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'DetailAttendanceFirst'>;
@@ -99,10 +101,11 @@ const DetailAttendanceFirst = ({navigation, route}: MyProps) => {
     AttendanceData[]
   >([]);
   const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchTimeTable = async (userId: string) => {
+      setLoading(true);
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         const response = await fetch(
@@ -126,6 +129,8 @@ const DetailAttendanceFirst = ({navigation, route}: MyProps) => {
         setStudentAttendances(data);
       } catch (error) {
         console.error('Error fetching scores data', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -188,10 +193,16 @@ const DetailAttendanceFirst = ({navigation, route}: MyProps) => {
   };
 
   return (
-    <View style={{flex: 1, width: '100%'}}>
-      <ScrollView style={styles.container}>
-        {renderSemesterComponents()}
-      </ScrollView>
+    <View style={styles.containerMain}>
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={colors.primaryColor} />
+        </View>
+      ) : (
+        <ScrollView style={styles.container}>
+          {renderSemesterComponents()}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -199,6 +210,7 @@ const DetailAttendanceFirst = ({navigation, route}: MyProps) => {
 export default DetailAttendanceFirst;
 
 const styles = StyleSheet.create({
+  containerMain: {flex: 1, width: '100%', justifyContent: 'center'},
   container: {
     flex: 1,
   },
@@ -223,6 +235,11 @@ const styles = StyleSheet.create({
     color: 'white',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loaderContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });
 

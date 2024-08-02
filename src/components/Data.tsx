@@ -31,7 +31,7 @@ export const sections: SectionType[] = [
       {
         image: require('../assets/images/icons/Exam.png'),
         id: '3',
-        title: 'Kiểm tra',
+        title: 'Tính điểm',
       },
       // Add more access items here if needed
     ],
@@ -74,6 +74,29 @@ export const sectionByTeacher: SectionType[] = [
         title: 'Thời khóa biểu',
       },
       // Add more access items here if needed
+    ],
+  },
+  {
+    title: 'Báo cáo',
+    data: [
+      {
+        image: require('../assets/images/icons/Attendance.png'),
+        id: '4',
+        title: 'Điểm danh',
+      },
+      // Add more report items here if needed
+    ],
+  },
+];
+export const sectionNull: SectionType[] = [
+  {
+    title: 'Thông báo',
+    data: [
+      {
+        image: require('../assets/images/icons/Notification.png'),
+        id: '1',
+        title: 'Thông báo',
+      },
     ],
   },
 ];

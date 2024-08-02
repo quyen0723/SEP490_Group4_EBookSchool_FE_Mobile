@@ -1,7 +1,10 @@
-import {View, Text} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
-import {NavigationContainer} from '@react-navigation/native';
+import {
+  createStackNavigator,
+  StackNavigationProp,
+} from '@react-navigation/stack';
+import {NavigationContainer, RouteProp} from '@react-navigation/native';
 import Splash from '../screens/Splash';
 import Login from '../screens/Login';
 import Home from '../screens/Home';
@@ -13,21 +16,59 @@ import NotificationDetail from '../screens/NotificationDetail';
 import WeeklyTimeTable from '../screens/WeeklyTimeTable';
 import Attendance from '../screens/Attendance';
 import Score from '../screens/ScoreMain';
-import Exam from '../screens/Exam';
-import ButtonTopTab from './ButtonTopTab';
+import Calculate from '../screens/Calculate';
+// import ButtonTopTab from './ButtonTopTab';
 import ScoreMain from '../screens/ScoreMain';
 import DetailScoreFirstYearOne from '../screens/DetailScoreFirstYearOne';
 import DetailAttendanceFirst from '../screens/DetailAttendanceFirst';
 import DetailAttendanceSubject from '../screens/DetailAttendanceSubject';
 import WeeklyTimeTableMain from '../screens/WeeklyTimeTableMain';
-import WeeklyTimeTableTeacher from '../screens/WeeklyTimeTableTeacher';
+import DetailAttendanceTeacher from '../screens/DetailAttendanceTeacher';
+import {colors} from '../assets/css/colors';
 
 const Stack = createStackNavigator<RootNavigationProps>();
 
-const AppNavigator = () => {
+const CustomHeader = ({navigation, route, title}) => (
+  <View style={styles.header}>
+    <TouchableOpacity onPress={() => navigation.goBack()}>
+      <Image
+        style={styles.image}
+        source={require('../assets/images/icons/Back.png')}
+      />
+    </TouchableOpacity>
+    <Text style={styles.headerTitle}>{title || route.name}</Text>
+    <View style={{flex: 1}} />
+  </View>
+);
+
+const screenOptions = ({navigation, route}) => ({
+  headerShown: true,
+  header: ({options}) => (
+    <CustomHeader
+      navigation={navigation}
+      route={route}
+      title={options.title || route.name}
+    />
+  ),
+  headerStyle: {
+    backgroundColor: colors.primaryColor,
+    elevation: 5,
+  },
+  headerTitleStyle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+  },
+  headerTintColor: '#FFFFFF',
+});
+
+const AppNavigator = ({initialRouteName}: {initialRouteName: string}) => {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+        initialRouteName={initialRouteName}
+        screenOptions={screenOptions}>
         <Stack.Screen
           name="Splash"
           component={Splash}
@@ -43,11 +84,6 @@ const AppNavigator = () => {
           component={ButtonTab}
           options={{headerShown: false}}
         />
-        {/* <Stack.Screen
-          name="ButtonTopTab"
-          component={ButtonTopTab}
-          options={{headerShown: false}}
-        /> */}
         <Stack.Screen
           name="Profile"
           component={Profile} // Add the Profile component as a screen
@@ -74,11 +110,6 @@ const AppNavigator = () => {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="WeeklyTimeTableTeacher"
-          component={WeeklyTimeTableTeacher} // Add the Profile component as a screen
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
           name="Attendance"
           component={Attendance} // Add the Profile component as a screen
           options={{headerShown: false}}
@@ -89,9 +120,9 @@ const AppNavigator = () => {
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="Exam"
-          component={Exam} // Add the Profile component as a screen
-          options={{headerShown: false}}
+          name="Calculate"
+          component={Calculate} // Add the Profile component as a screen
+          options={{headerShown: true, title: 'Tính điểm'}}
         />
         <Stack.Screen
           name="DetailScoreFirstYearOne"
@@ -108,9 +139,39 @@ const AppNavigator = () => {
           component={DetailAttendanceSubject} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
+        <Stack.Screen
+          name="DetailAttendanceTeacher"
+          component={DetailAttendanceTeacher} // Add the Profile component as a screen
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
 
 export default AppNavigator;
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+    backgroundColor: colors.primaryColor,
+    elevation: 5,
+    paddingHorizontal: 10,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginLeft: 120,
+    color: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: 27,
+    height: 27,
+    tintColor: '#FFFFFF',
+  },
+});

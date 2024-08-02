@@ -147,7 +147,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootNavigationProps} from './types';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
@@ -158,6 +158,9 @@ import ScoreSecondYear from './ScoreSecondYear';
 import ScoreThirdYear from './ScoreThirdYear';
 import ScoreFourthYear from './ScoreFourthYear';
 import DetailAttendanceFirst from './DetailAttendanceFirst';
+import DetailAttendanceTeacher from './DetailAttendanceTeacher';
+import Loader from '../components/Loader';
+import {useFocusEffect} from '@react-navigation/native';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -168,25 +171,35 @@ interface MyProps {
 
 const Attendance = ({navigation}: MyProps) => {
   const [schoolYears, setSchoolYears] = useState<string[]>([]);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchSchoolYears = async () => {
-      try {
-        const schoolYearsString = await AsyncStorage.getItem('userSchoolYears');
-        if (schoolYearsString) {
-          setSchoolYears(JSON.parse(schoolYearsString));
-        } else {
-          Alert.alert('Error', 'No school years data found');
+  useFocusEffect(
+    useCallback(() => {
+      const fetchSchoolYearsAndRoles = async () => {
+        setLoading(true);
+        try {
+          const schoolYearsString = await AsyncStorage.getItem(
+            'userSchoolYears',
+          );
+          const rolesString = await AsyncStorage.getItem('userRoles');
+          if (schoolYearsString && rolesString) {
+            setSchoolYears(JSON.parse(schoolYearsString));
+            setUserRoles(JSON.parse(rolesString));
+          } else {
+            Alert.alert('Error', 'No school years or roles data found');
+          }
+        } catch (error) {
+          console.error('Error fetching school years or roles', error);
+          // Alert.alert('Error', 'An error occurred while fetching data');
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching school years', error);
-        Alert.alert('Error', 'An error occurred while fetching school years');
-      }
-    };
+      };
 
-    fetchSchoolYears();
-  }, []);
-
+      fetchSchoolYearsAndRoles();
+    }, [navigation]),
+  );
   useEffect(() => {
     navigation.setOptions({
       title: 'Điểm danh',
@@ -202,16 +215,23 @@ const Attendance = ({navigation}: MyProps) => {
   }, [navigation]);
 
   const renderTabs = () => {
+    const isStudent = userRoles.includes('Student');
     return schoolYears.map((year, index) => (
       <Tab.Screen
         key={index}
         name={`Year${index}`}
-        component={DetailAttendanceFirst} // Change this to the relevant component for each year
+        component={isStudent ? DetailAttendanceFirst : DetailAttendanceTeacher}
         initialParams={{year}}
         options={{
           tabBarLabel: ({focused}) => (
             <View style={[styles.tabItem, focused && styles.tabItemFocused]}>
-              <Text style={{color: focused ? 'white' : 'black'}}>{year}</Text>
+              <Text
+                style={{
+                  color: focused ? 'white' : 'black',
+                  fontWeight: 'bold',
+                }}>
+                {year}
+              </Text>
             </View>
           ),
         }}
@@ -254,9 +274,10 @@ const Attendance = ({navigation}: MyProps) => {
           {renderTabs()}
         </Tab.Navigator>
       ) : (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>Loading...</Text>
-        </View>
+        // <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        //   <Text>Loading...</Text>
+        // </View>
+        <Loader visible={loading} />
       )}
     </View>
   );

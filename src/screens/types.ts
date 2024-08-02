@@ -1,3 +1,5 @@
+import {ScoreByStudentsBySubjectsData} from '../mock/score';
+
 export type RootNavigationProps = {
   Splash: undefined;
   Login: undefined;
@@ -9,6 +11,7 @@ export type RootNavigationProps = {
   Notification: undefined;
   NotificationDetail: undefined;
   WeeklyTimeTableMain: undefined;
+  WeeklyTimeTableMainTeacher: undefined;
   WeeklyTimeTable: undefined;
   WeeklyTimeTableTeacher: undefined;
   Attendance: undefined;
@@ -17,12 +20,13 @@ export type RootNavigationProps = {
   ScoreSecondYear: undefined;
   ScoreThirdYear: undefined;
   ScoreFourthYear: undefined;
-  Exam: undefined;
+  Calculate: {scores: ScoreByStudentsBySubjectsData} | undefined;
   ButtonTopTab: undefined;
   DetailScoreFirstYearOne: undefined;
   AttendanceFirstYear: undefined;
   DetailAttendanceFirst: undefined;
   DetailAttendanceSubject: undefined;
+  DetailAttendanceTeacher: undefined;
 };
 
 export interface User {
@@ -32,7 +36,7 @@ export interface User {
   birthday: string;
   birthplace: string;
   nation: string;
-  homeTown: string;
+  address: string;
   fatherFullName: string;
   motherFullName: string;
   fatherProfession: string;
