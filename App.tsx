@@ -14,6 +14,7 @@ import AppNavigator from './src/navigations/AppNavigator';
 import ExampleTable from './src/screens/ExampleTable';
 import DropdownComponent from './src/components/DropdownComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 
 export type RootStackParamsList = {
   Home: undefined;
@@ -56,7 +57,7 @@ const App = () => {
       </View>
     );
   }
-
+  const queryClient = new QueryClient();
   return (
     // <NavigationContainer>
     //   <Stack.Navigator>
@@ -64,12 +65,14 @@ const App = () => {
     //     <Stack.Screen name="Settings" component={Settings} />
     //   </Stack.Navigator>
     // </NavigationContainer>
-    <View style={{flex: 1}}>
-      <AppNavigator initialRouteName={initialRoute} />
+    <QueryClientProvider client={queryClient}>
+      <View style={{flex: 1}}>
+        <AppNavigator initialRouteName={initialRoute} />
 
-      {/* <DropdownComponent /> */}
-      {/* <ExampleTable /> */}
-    </View>
+        {/* <DropdownComponent /> */}
+        {/* <ExampleTable /> */}
+      </View>
+    </QueryClientProvider>
   );
 };
 

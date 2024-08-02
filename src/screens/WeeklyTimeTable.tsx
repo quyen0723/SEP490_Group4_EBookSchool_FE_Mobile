@@ -25,6 +25,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MemoizedCard from '../components/MemoizedCard';
 import {useTab} from '../components/TabContext';
+import {useFetchTimeTable} from '../hooks/useFetchTimeTable';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
   route: RouteProp<{params: {year: string; semesterId: number}}, 'params'>;
@@ -110,84 +111,112 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   // const [items, setItems] = useState<Items>({});
   // const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const fetchTimeTable = useCallback(
-    async (userId: string) => {
-      console.log('AAAAAAAAAAAAAAAAAAAAAAA');
-      try {
-        const accessToken = await AsyncStorage.getItem('accessToken');
-        const roles = JSON.parse(
-          (await AsyncStorage.getItem('userRoles')) || '[]',
-        );
-        let url = '';
+  // const fetchTimeTable = useCallback(
+  //   async (userId: string) => {
+  //     console.log('AAAAAAAAAAAAAAAAAAAAAAA');
+  //     try {
+  //       const accessToken = await AsyncStorage.getItem('accessToken');
+  //       const roles = JSON.parse(
+  //         (await AsyncStorage.getItem('userRoles')) || '[]',
+  //       );
+  //       let url = '';
 
-        if (roles.includes('Student')) {
-          url = `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`;
-        } else if (
-          roles.includes('Subject Teacher') ||
-          roles.includes('Admin')
-        ) {
-          url = `https://orbapi.click/api/Schedules/SubjectTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
-        } else if (roles.includes('HomeroomTeacher')) {
-          url = `https://orbapi.click/api/Schedules/HomeroomTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
-        }
-        console.log('yeyyyyyyyy', year);
-        if (url) {
-          const response = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
-          const textResponse = await response.text();
-          console.log('Response:', textResponse);
+  //       if (roles.includes('Student')) {
+  //         url = `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+  //       } else if (
+  //         roles.includes('Subject Teacher') ||
+  //         roles.includes('Admin')
+  //       ) {
+  //         url = `https://orbapi.click/api/Schedules/SubjectTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+  //       } else if (roles.includes('HomeroomTeacher')) {
+  //         url = `https://orbapi.click/api/Schedules/HomeroomTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+  //       }
+  //       console.log('yeyyyyyyyy', year);
+  //       if (url) {
+  //         const response = await fetch(url, {
+  //           headers: {
+  //             Authorization: `Bearer ${accessToken}`,
+  //           },
+  //         });
+  //         const textResponse = await response.text();
+  //         console.log('Response:', textResponse);
 
-          if (textResponse === 'Không tìm thấy lớp học') {
-            const emptyItems: Items = {};
-            const fromDate = new Date(monday.split('/').reverse().join('-'));
-            const toDate = new Date(fromDate);
-            toDate.setDate(fromDate.getDate() + 6);
+  //         if (textResponse === 'Không tìm thấy lớp học') {
+  //           const emptyItems: Items = {};
+  //           const fromDate = new Date(monday.split('/').reverse().join('-'));
+  //           const toDate = new Date(fromDate);
+  //           toDate.setDate(fromDate.getDate() + 6);
 
-            for (
-              let date = fromDate;
-              date <= toDate;
-              date.setDate(date.getDate() + 1)
-            ) {
-              const strTime = timeToString(date.getTime());
-              emptyItems[strTime] = [
-                {
-                  name: 'Không tìm thấy lớp học',
-                  slotTime: '',
-                  teacherOrClassroom: '',
-                  slot: '',
-                  status: '',
-                },
-              ];
-            }
-            setItems(emptyItems);
-          } else {
-            const timeTableData = JSON.parse(textResponse);
-            console.log('Time table data:', timeTableData);
+  //           for (
+  //             let date = fromDate;
+  //             date <= toDate;
+  //             date.setDate(date.getDate() + 1)
+  //           ) {
+  //             const strTime = timeToString(date.getTime());
+  //             emptyItems[strTime] = [
+  //               {
+  //                 name: 'Không tìm thấy lớp học',
+  //                 slotTime: '',
+  //                 teacherOrClassroom: '',
+  //                 slot: '',
+  //                 status: '',
+  //               },
+  //             ];
+  //           }
+  //           setItems(emptyItems);
+  //         } else {
+  //           const timeTableData = JSON.parse(textResponse);
+  //           console.log('Time table data:', timeTableData);
 
-            if (timeTableData) {
-              const processedItems = processTimeTableData(timeTableData, roles);
-              setWeeklyTimeTable(timeTableData);
-              setItems(processedItems);
-              setFromDatee(timeTableData.fromDate);
-              setToDatee(timeTableData.toDate);
-              setClassData(timeTableData.class);
-              setTeacherData(timeTableData.mainTeacher);
-            } else {
-              console.error('Received empty timetable data');
-            }
-          }
-        } else {
-          console.error('No valid role found for fetching timetable');
-        }
-      } catch (error) {
-        console.error('Error fetching timetable data', error);
-      }
-    },
-    [monday, year], // dependency array
-  );
+  //           if (timeTableData) {
+  //             const processedItems = processTimeTableData(timeTableData, roles);
+  //             setWeeklyTimeTable(timeTableData);
+  //             setItems(processedItems);
+  //             setFromDatee(timeTableData.fromDate);
+  //             setToDatee(timeTableData.toDate);
+  //             setClassData(timeTableData.class);
+  //             setTeacherData(timeTableData.mainTeacher);
+  //           } else {
+  //             console.error('Received empty timetable data');
+  //           }
+  //         }
+  //       } else {
+  //         console.error('No valid role found for fetching timetable');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching timetable data', error);
+  //     }
+  //   },
+  //   [monday, year], // dependency array
+  // );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchUserIdAndRoles = async () => {
+  //       try {
+  //         const storedUserId = await AsyncStorage.getItem('userId');
+  //         const roles = JSON.parse(
+  //           (await AsyncStorage.getItem('userRoles')) || '[]',
+  //         );
+  //         if (storedUserId) {
+  //           setUserId(storedUserId);
+  //           setUserRoles(roles);
+  //           if (currentTab === year) {
+  //             fetchTimeTable(storedUserId);
+  //           }
+  //         } else {
+  //           console.error('No user ID found in AsyncStorage');
+  //         }
+  //       } catch (error) {
+  //         console.error(
+  //           'Error fetching user ID or roles from AsyncStorage',
+  //           error,
+  //         );
+  //       }
+  //     };
+
+  //     fetchUserIdAndRoles();
+  //   }, [fetchTimeTable, currentTab, year]),
+  // );
   useFocusEffect(
     useCallback(() => {
       const fetchUserIdAndRoles = async () => {
@@ -199,9 +228,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
           if (storedUserId) {
             setUserId(storedUserId);
             setUserRoles(roles);
-            if (currentTab === year) {
-              fetchTimeTable(storedUserId);
-            }
           } else {
             console.error('No user ID found in AsyncStorage');
           }
@@ -214,9 +240,54 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
       };
 
       fetchUserIdAndRoles();
-    }, [fetchTimeTable, currentTab, year]),
+    }, []),
   );
 
+  const {
+    data: timetableData,
+    isLoading,
+    error,
+  } = useFetchTimeTable(userId!, year, monday);
+
+  useEffect(() => {
+    console.log(timetableData);
+    if (timetableData) {
+      if (timetableData.message === 'Không tìm thấy lớp học') {
+        const emptyItems: Items = {};
+        const fromDate = new Date(monday.split('/').reverse().join('-'));
+        const toDate = new Date(fromDate);
+        toDate.setDate(fromDate.getDate() + 6);
+
+        for (
+          let date = fromDate;
+          date <= toDate;
+          date.setDate(date.getDate() + 1)
+        ) {
+          const strTime = timeToString(date.getTime());
+          emptyItems[strTime] = [
+            {
+              name: 'Không tìm thấy lớp học',
+              slotTime: '',
+              teacherOrClassroom: '',
+              slot: '',
+              status: '',
+            },
+          ];
+        }
+        setItems(emptyItems);
+      } else {
+        const processedItems = processTimeTableData(
+          timetableData.data,
+          userRoles,
+        );
+        setItems(processedItems);
+        setFromDatee(timetableData.data.fromDate);
+        setToDatee(timetableData.data.toDate);
+        setClassData(timetableData.data.class);
+        setTeacherData(timetableData.data.mainTeacher);
+      }
+    }
+  }, [timetableData]);
   // useEffect(() => {
   //   navigation.setOptions({
   //     title: 'Thời khóa biểu',
