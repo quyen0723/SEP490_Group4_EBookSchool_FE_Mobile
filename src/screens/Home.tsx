@@ -11,6 +11,7 @@ import {
   Alert,
   TextInput,
   Button,
+  InteractionManager,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -45,6 +46,7 @@ import Score from './ScoreMain';
 import Calculate from './Calculate';
 import WeeklyTimeTableMain from './WeeklyTimeTableMain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFetchTimeTable} from '../hooks/useFetchTimeTable';
 // interface MyProps {
 //   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
 // }
@@ -52,21 +54,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface MyProps {
   navigation: DrawerNavigationProp<RootNavigationProps, 'Home'>; // Sử dụng DrawerNavigationProp thay vì StackNavigationProp
 }
-
+function getFormattedMondayOfCurrentWeek(): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const distanceToMonday = (dayOfWeek + 6) % 7; // Calculate distance to Monday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - distanceToMonday);
+  const day: string = String(monday.getDate()).padStart(2, '0');
+  const month: string = String(monday.getMonth() + 1).padStart(2, '0');
+  const year: number = monday.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 const renderFlatList = ({
   item,
   navigation,
   role,
+  timetableData,
 }: {
   item: SectionType;
   navigation?: MyProps;
   role: string | null;
+  timetableData: any;
 }) => (
   <>
     {renderSectionHeader({section: item})}
     <FlatList
       data={item.data}
-      renderItem={({item}) => renderItem({item, navigation: navigation!, role})}
+      renderItem={({item}) =>
+        renderItem({item, navigation: navigation!, role, timetableData})
+      }
       keyExtractor={item => item.id.toString()}
       numColumns={item.data.length === 1 ? 1 : 2}
       key={item.data.length === 1 ? 'h' : 'v'} // Thêm key để buộc FlatList render lại khi numColumns thay đổi
@@ -80,10 +96,12 @@ const handleItemClickAction = ({
   item,
   navigation,
   role,
+  timetableData,
 }: {
   item: ItemType;
   navigation?: MyProps;
   role: string | null;
+  timetableData: any;
 }) => {
   // if (!role && (itemId === '2' || itemId === '4')) {
   //   console.log('Navigation prevented for item:', itemId);
@@ -100,7 +118,7 @@ const handleItemClickAction = ({
       // if (role === 'Admin') {
       //   navigation.navigate('WeeklyTimeTableTeacher');
       // } else {
-      navigation.navigate('WeeklyTimeTableMain');
+      navigation.navigate('WeeklyTimeTableMain', {timetableData});
       // }
     } else if (itemId === '3') {
       navigation.navigate('Calculate');
@@ -126,13 +144,15 @@ const renderItem = ({
   item,
   navigation,
   role,
+  timetableData,
 }: {
   item: ItemType;
   navigation: MyProps;
   role: string | null;
+  timetableData: any;
 }) => {
   const handleItemClick = () => {
-    handleItemClickAction({item, navigation, role});
+    handleItemClickAction({item, navigation, role, timetableData});
   };
 
   return (
@@ -146,7 +166,9 @@ const renderItem = ({
 function HomeScreen({navigation}: MyProps) {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
+  const [userId, setUserId] = useState<string | null>(null);
+  const [year, setYear] = useState<string | null>(null);
+  const [monday, setMonday] = useState<string | null>(null);
   // useEffect(() => {
   //   const fetchUserRole = async () => {
   //     try {
@@ -168,28 +190,111 @@ function HomeScreen({navigation}: MyProps) {
 
   //   fetchUserRole();
   // }, []);
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchUserRole = async () => {
+  //       try {
+  //         const storedRole = await AsyncStorage.getItem('userRoles');
+  //         if (storedRole) {
+  //           const parsedRoles = JSON.parse(storedRole);
+  //           setRole(parsedRoles[0]);
+  //           console.log('User role:', parsedRoles[0]); // In ra vai trò đã được đặt
+  //         } else {
+  //           console.error('No user roles found in AsyncStorage');
+  //         }
+  //       } catch (error) {
+  //         console.error('Error fetching user roles from AsyncStorage', error);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
+
+  //     fetchUserRole();
+  //     // fetchAdditionalData();
+  //   }, [navigation]), // Chạy lại khi navigation thay đổi
+  // );
+  const fetchUserRole = async () => {
+    try {
+      const storedRole = await AsyncStorage.getItem('userRoles');
+      if (storedRole) {
+        const parsedRoles = JSON.parse(storedRole);
+        setRole(parsedRoles[0]);
+        console.log('User role:', parsedRoles[0]);
+      } else {
+        console.error('No user roles found in AsyncStorage');
+      }
+    } catch (error) {
+      console.error('Error fetching user roles from AsyncStorage', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAdditionalData = async () => {
+    try {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      const storedSchoolYears = await AsyncStorage.getItem('userSchoolYears');
+      const currentMonday = getFormattedMondayOfCurrentWeek();
+
+      if (storedUserId && storedSchoolYears) {
+        const schoolYears = JSON.parse(storedSchoolYears);
+        setUserId(storedUserId);
+        setYear(schoolYears[0]); // Lấy năm học đầu tiên từ mảng
+        setMonday(currentMonday);
+        console.log('User ID:', storedUserId);
+        console.log('Year:', schoolYears[0]);
+        console.log('Monday:', currentMonday);
+      } else {
+        console.error('No user ID or school years found in AsyncStorage');
+      }
+    } catch (error) {
+      console.error('Error fetching additional data from AsyncStorage', error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      const fetchUserRole = async () => {
-        try {
-          const storedRole = await AsyncStorage.getItem('userRoles');
-          if (storedRole) {
-            const parsedRoles = JSON.parse(storedRole);
-            setRole(parsedRoles[0]);
-            console.log('User role:', parsedRoles[0]); // In ra vai trò đã được đặt
-          } else {
-            console.error('No user roles found in AsyncStorage');
-          }
-        } catch (error) {
-          console.error('Error fetching user roles from AsyncStorage', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
       fetchUserRole();
-    }, [navigation]), // Chạy lại khi navigation thay đổi
+      fetchAdditionalData();
+    }, [navigation]),
   );
+  // const {data: timetableData, refetch} = useFetchTimeTable(
+  //   userId!,
+  //   year!,
+  //   monday!,
+  // );
+  const {
+    data: timetableData,
+    refetch,
+    isFetching,
+    isStale,
+    isPreviousData,
+  } = useFetchTimeTable(userId!, year!, monday!);
+  useEffect(() => {
+    if (userId && year && monday) {
+      InteractionManager.runAfterInteractions(() => {
+        refetch();
+      });
+    }
+  }, [userId, year, monday, refetch]);
+
+  // useEffect(() => {
+  //   if (timetableData) {
+  //     console.log('Weekly timetable data:', timetableData);
+  //   }
+  // }, [timetableData]);
+  useEffect(() => {
+    if (timetableData) {
+      console.log('HOME Weekly timetable data:', timetableData);
+      if (isFetching) {
+        console.log('HOME Fetching data from API...');
+      } else {
+        console.log('HOME Data is from cache');
+      }
+      console.log('isStale:', isStale);
+      console.log('isPreviousData:', isPreviousData);
+    }
+  }, [timetableData, isFetching, isStale, isPreviousData]);
 
   const data = role == 'Student' ? sections : sectionByTeacher;
   console.log('Role:', role);
@@ -202,7 +307,9 @@ function HomeScreen({navigation}: MyProps) {
       ) : (
         <FlatList
           data={data}
-          renderItem={({item}) => renderFlatList({item, navigation, role})}
+          renderItem={({item}) =>
+            renderFlatList({item, navigation, role, timetableData})
+          }
           keyExtractor={(item, index) => index.toString()}
         />
       )}

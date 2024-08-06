@@ -25,10 +25,15 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MemoizedCard from '../components/MemoizedCard';
 import {useTab} from '../components/TabContext';
+
+import {useQueryClient} from '@tanstack/react-query';
 import {useFetchTimeTable} from '../hooks/useFetchTimeTable';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
-  route: RouteProp<{params: {year: string; semesterId: number}}, 'params'>;
+  route: RouteProp<
+    {params: {year: string; semesterId: number; timetableData: any}},
+    'params'
+  >;
 }
 
 type Item = {
@@ -44,6 +49,7 @@ type Item = {
 type Items = {
   [key: string]: Item[];
 };
+
 interface CustomColProps extends ColProps {
   widthArr?: number[];
 }
@@ -88,7 +94,7 @@ const timeToString = (time: number): string => {
 
 const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   // const [monday, setMonday] = useState(getFormattedMondayOfWeek(new Date()));
-  const {year} = route.params;
+  const {year, timetableData: initialTimetableData} = route.params;
   const {currentTab} = useTab(); // Use currentTab from useTab
   const [monday, setMonday] = useState(
     getFormattedDate(getMondayOfCurrentWeek()),
@@ -107,6 +113,8 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [items, setItems] = useState<Items>({});
   const [currentMonth, setCurrentMonth] = useState(getMondayOfCurrentWeek());
+  const queryClient = useQueryClient();
+  const [shouldRenderAgenda, setShouldRenderAgenda] = useState(false);
   const agendaRef = useRef(null);
   // const [items, setItems] = useState<Items>({});
   // const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -217,6 +225,23 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   //     fetchUserIdAndRoles();
   //   }, [fetchTimeTable, currentTab, year]),
   // );
+
+  // const {
+  //   data: timetableData,
+  //   isLoading,
+  //   error,
+  //   refetch,
+  // } = useFetchTimeTable(userId!, year, monday);
+
+  const {
+    data: timetableData,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+    isStale,
+  } = useFetchTimeTable(userId!, year, monday);
+
   useFocusEffect(
     useCallback(() => {
       const fetchUserIdAndRoles = async () => {
@@ -228,6 +253,7 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
           if (storedUserId) {
             setUserId(storedUserId);
             setUserRoles(roles);
+            console.log('User ID and roles fetched:', storedUserId, roles);
           } else {
             console.error('No user ID found in AsyncStorage');
           }
@@ -243,21 +269,42 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     }, []),
   );
 
-  const {
-    data: timetableData,
-    isLoading,
-    error,
-  } = useFetchTimeTable(userId!, year, monday);
+  useEffect(() => {
+    // Make sure userId is not null before fetching the timetable
+    if (userId !== null) {
+      refetch();
+    }
+  }, [userId, refetch]);
 
   useEffect(() => {
-    console.log(timetableData);
+    if (currentTab === year) {
+      console.log('Refetching data for year:', year);
+      refetch();
+    }
+  }, [refetch, currentTab, year]);
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (currentTab === year) {
+  //       console.log('Refetching data for year:', year);
+  //       refetch();
+  //     }
+  //   }, [refetch, currentTab, year]),
+  // );
+
+  useEffect(() => {
+    console.log(
+      'Fetching status:',
+      isFetching ? 'Fetching from API...' : 'Data from cache',
+    );
+    console.log('isStale:', isStale);
+    console.log('KKKKKK', timetableData);
     if (timetableData) {
       if (timetableData.message === 'Không tìm thấy lớp học') {
         const emptyItems: Items = {};
         const fromDate = new Date(monday.split('/').reverse().join('-'));
         const toDate = new Date(fromDate);
         toDate.setDate(fromDate.getDate() + 6);
-
         for (
           let date = fromDate;
           date <= toDate;
@@ -285,9 +332,12 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
         setToDatee(timetableData.data.toDate);
         setClassData(timetableData.data.class);
         setTeacherData(timetableData.data.mainTeacher);
+        setShouldRenderAgenda(true);
+        console.log('Processed Items:', processedItems);
       }
     }
-  }, [timetableData]);
+  }, [timetableData, userRoles]);
+
   // useEffect(() => {
   //   navigation.setOptions({
   //     title: 'Thời khóa biểu',
@@ -476,6 +526,45 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   // const CustomCol: React.FC<CustomColProps> = ({widthArr, ...rest}) => {
   //   return <Col {...rest} />;
   // };
+  const handleWeekChange = useCallback(
+    (direction: 'prev' | 'next') => {
+      const newMonth = new Date(currentMonth);
+      const currentMonday = getMondayOfWeek(
+        new Date(monday.split('/').reverse().join('-')),
+      );
+      if (direction === 'prev') {
+        newMonth.setDate(newMonth.getDate() - 7);
+        currentMonday.setDate(currentMonday.getDate() - 7);
+      } else {
+        newMonth.setDate(newMonth.getDate() + 7);
+        currentMonday.setDate(currentMonday.getDate() + 7);
+      }
+      setCurrentMonth(newMonth);
+      setMonday(getFormattedDate(currentMonday));
+      setSelectedDate(timeToString(currentMonday.getTime()));
+      setItems({});
+    },
+    [currentMonth, monday],
+  );
+
+  const handleDayPress = useCallback(
+    (day: any) => {
+      const selectedDate = new Date(day.timestamp);
+      const mondayOfSelectedDate = getMondayOfWeek(selectedDate);
+
+      const currentMonday = getMondayOfWeek(currentMonth);
+      const currentSunday = new Date(currentMonday);
+      currentSunday.setDate(currentSunday.getDate() + 6);
+
+      if (selectedDate < currentMonday || selectedDate > currentSunday) {
+        setCurrentMonth(mondayOfSelectedDate);
+        setMonday(getFormattedDate(mondayOfSelectedDate));
+        setSelectedDate(timeToString(mondayOfSelectedDate.getTime()));
+        setItems({});
+      }
+    },
+    [currentMonth],
+  );
 
   const renderItem = useCallback(
     (item: Item, index: number, numberOfSlotsWithData: number) => {
@@ -678,27 +767,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     );
   };
 
-  const handleWeekChange = useCallback(
-    (direction: 'prev' | 'next') => {
-      const newMonth = new Date(currentMonth);
-      const currentMonday = getMondayOfWeek(
-        new Date(monday.split('/').reverse().join('-')),
-      );
-      if (direction === 'prev') {
-        newMonth.setDate(newMonth.getDate() - 7);
-        currentMonday.setDate(currentMonday.getDate() - 7);
-      } else {
-        newMonth.setDate(newMonth.getDate() + 7);
-        currentMonday.setDate(currentMonday.getDate() + 7);
-      }
-      setCurrentMonth(newMonth);
-      setMonday(getFormattedDate(currentMonday));
-      setSelectedDate(timeToString(currentMonday.getTime()));
-      setItems({});
-    },
-    [currentMonth, monday],
-  );
-
   // const handleDayPress = (day: any) => {
   //   const selectedDate = new Date(day.timestamp);
   //   const monday = getMondayOfWeek(selectedDate);
@@ -707,24 +775,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   //   setSelectedDate(timeToString(monday.getTime()));
   //   setItems({});
   // };
-  const handleDayPress = useCallback(
-    (day: any) => {
-      const selectedDate = new Date(day.timestamp);
-      const mondayOfSelectedDate = getMondayOfWeek(selectedDate);
-
-      const currentMonday = getMondayOfWeek(currentMonth);
-      const currentSunday = new Date(currentMonday);
-      currentSunday.setDate(currentSunday.getDate() + 6);
-
-      if (selectedDate < currentMonday || selectedDate > currentSunday) {
-        setCurrentMonth(mondayOfSelectedDate);
-        setMonday(getFormattedDate(mondayOfSelectedDate));
-        setSelectedDate(timeToString(mondayOfSelectedDate.getTime()));
-        setItems({});
-      }
-    },
-    [currentMonth],
-  );
 
   const [agendaCurrentMonth, setAgendaCurrentMonth] = useState(new Date());
   const handleVisibleMonthsChange = (months: any[]) => {
@@ -745,13 +795,14 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
       </View>
 
       {renderCalendarHeader()}
-      <Agenda
+      {/* <Agenda
         key={agendaCurrentMonth.getTime()} // Sử dụng key duy nhất dựa trên thời gian của currentMonth
         ref={agendaRef}
         items={items}
         loadItemsForMonth={loadItems}
         selected={currentMonth.toISOString().split('T')[0]}
         // selected={timeToString(getMondayOfCurrentWeek().getTime())}
+        // renderItem={renderItem}
         renderItem={renderItem}
         current={currentMonth}
         onDayPress={handleDayPress}
@@ -767,7 +818,31 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
           selectedDayBackgroundColor: 'transparent',
           selectedDayTextColor: colors.primaryColor,
         }}
-      />
+      /> */}
+      {shouldRenderAgenda && (
+        <Agenda
+          key={agendaCurrentMonth.getTime()}
+          ref={agendaRef}
+          items={items}
+          loadItemsForMonth={loadItems}
+          selected={currentMonth.toISOString().split('T')[0]}
+          renderItem={renderItem}
+          current={currentMonth}
+          onDayPress={handleDayPress}
+          VisibleMonthsChange={handleVisibleMonthsChange}
+          firstDay={1}
+          theme={{
+            dayTextColor: colors.primaryColor,
+            textSectionTitleColor: theme.colors.onBackground,
+            textMonthFontWeight: 'bold',
+            todayTextColor: colors.blackColor,
+            todayDotColor: colors.blackColor,
+            textDayHeaderFontWeight: 'bold',
+            selectedDayBackgroundColor: 'transparent',
+            selectedDayTextColor: colors.primaryColor,
+          }}
+        />
+      )}
     </View>
   );
 };

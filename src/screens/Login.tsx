@@ -62,7 +62,7 @@ const Login = ({navigation}: MyProps) => {
 
   // Ensure username is reset upon loading the login screen
   useEffect(() => {
-    setUsername('ANHNHHS0001'); // Reset the username to the new value you want
+    setUsername('PHONGNVHS0075'); // Reset the username to the new value you want
   }, []);
 
   const sortSchoolYearsDescending = (schoolYears: string[]) => {
