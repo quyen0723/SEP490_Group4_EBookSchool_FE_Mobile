@@ -1,34 +1,36 @@
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
-import {
-  createStackNavigator,
-  StackNavigationProp,
-} from '@react-navigation/stack';
-import {NavigationContainer, RouteProp} from '@react-navigation/native';
-import Splash from '../screens/Splash';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import Attendance from '../screens/Attendance';
+import Calculate from '../screens/Calculate';
 import Login from '../screens/Login';
-import Home from '../screens/Home';
-import ButtonTab from './ButtonTab';
-import {RootNavigationProps} from '../screens/types';
-import Profile from '../screens/Profile';
 import Notification from '../screens/Notification';
 import NotificationDetail from '../screens/NotificationDetail';
+import Profile from '../screens/Profile';
+import Splash from '../screens/Splash';
+import {RootNavigationProps} from '../screens/types';
 import WeeklyTimeTable from '../screens/WeeklyTimeTable';
-import Attendance from '../screens/Attendance';
-import Score from '../screens/ScoreMain';
-import Calculate from '../screens/Calculate';
-// import ButtonTopTab from './ButtonTopTab';
-import ScoreMain from '../screens/ScoreMain';
-import DetailScoreFirstYearOne from '../screens/DetailScoreFirstYearOne';
+import ButtonTab from './ButtonTab';
+import {colors} from '../assets/css/colors';
 import DetailAttendanceFirst from '../screens/DetailAttendanceFirst';
 import DetailAttendanceSubject from '../screens/DetailAttendanceSubject';
-import WeeklyTimeTableMain from '../screens/WeeklyTimeTableMain';
 import DetailAttendanceTeacher from '../screens/DetailAttendanceTeacher';
-import {colors} from '../assets/css/colors';
+import DetailScoreFirstYearOne from '../screens/DetailScoreFirstYearOne';
+import ScoreMain from '../screens/ScoreMain';
+import WeeklyTimeTableMain from '../screens/WeeklyTimeTableMain';
 
 const Stack = createStackNavigator<RootNavigationProps>();
 
-const CustomHeader = ({navigation, route, title}) => (
+const CustomHeader = ({
+  navigation,
+  route,
+  title,
+}: {
+  navigation: any;
+  route: any;
+  title: any;
+}) => (
   <View style={styles.header}>
     <TouchableOpacity
       style={styles.backButton}
@@ -42,9 +44,9 @@ const CustomHeader = ({navigation, route, title}) => (
   </View>
 );
 
-const screenOptions = ({navigation, route}) => ({
+const screenOptions = ({navigation, route}: {navigation: any; route: any}) => ({
   headerShown: true,
-  header: ({options}) => (
+  header: ({options}: {options: any}) => (
     <CustomHeader
       navigation={navigation}
       route={route}
@@ -68,7 +70,7 @@ const AppNavigator = ({initialRouteName}: {initialRouteName: string}) => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={initialRouteName}
+        initialRouteName={initialRouteName as keyof RootNavigationProps}
         screenOptions={screenOptions}>
         <Stack.Screen
           name="Splash"
@@ -102,7 +104,7 @@ const AppNavigator = ({initialRouteName}: {initialRouteName: string}) => {
         />
         <Stack.Screen
           name="WeeklyTimeTable"
-          component={WeeklyTimeTable} // Add the Profile component as a screen
+          component={WeeklyTimeTable as any} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
         <Stack.Screen
@@ -122,27 +124,27 @@ const AppNavigator = ({initialRouteName}: {initialRouteName: string}) => {
         />
         <Stack.Screen
           name="Calculate"
-          component={Calculate} // Add the Profile component as a screen
+          component={Calculate as any} // Add the Profile component as a screen
           options={{headerShown: true, title: 'Tính điểm'}}
         />
         <Stack.Screen
           name="DetailScoreFirstYearOne"
-          component={DetailScoreFirstYearOne} // Add the Profile component as a screen
+          component={DetailScoreFirstYearOne as any} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
         <Stack.Screen
           name="DetailAttendanceFirst"
-          component={DetailAttendanceFirst} // Add the Profile component as a screen
+          component={DetailAttendanceFirst as any} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
         <Stack.Screen
           name="DetailAttendanceSubject"
-          component={DetailAttendanceSubject} // Add the Profile component as a screen
+          component={DetailAttendanceSubject as any} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
         <Stack.Screen
           name="DetailAttendanceTeacher"
-          component={DetailAttendanceTeacher} // Add the Profile component as a screen
+          component={DetailAttendanceTeacher as any} // Add the Profile component as a screen
           options={{headerShown: false}}
         />
       </Stack.Navigator>
