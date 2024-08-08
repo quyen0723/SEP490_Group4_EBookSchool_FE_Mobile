@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {RouteProp} from '@react-navigation/native';
+import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
@@ -225,13 +225,7 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
               setToDatee(fetchedTimeTableData.toDate);
               setClassData(fetchedTimeTableData.class);
               setTeacherData(fetchedTimeTableData.mainTeacher);
-              // setShouldRenderAgenda(true);
-
-              // Cache fetched data
-              setCachedWeeks(prev => ({
-                ...prev,
-                [monday]: fetchedTimeTableData,
-              }));
+              setShouldRenderAgenda(true);
             } else {
               console.error('Received empty timetable data');
             }
@@ -243,72 +237,54 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
         console.error('Error fetching timetable data', error);
       }
     },
-    [year], // dependency array
+    [year, processTimeTableData], // dependency array
   );
 
-  useEffect(() => {
-    const fetchAdjacentWeeksData = async (currentMonday: string) => {
-      if (userId) {
-        const currentDate = new Date(
-          currentMonday.split('/').reverse().join('-'),
-        );
-
-        const prevMonday = getFormattedDate(
-          new Date(currentDate.setDate(currentDate.getDate() - 7)),
-        );
-        const nextMonday = getFormattedDate(
-          new Date(currentDate.setDate(currentDate.getDate() + 14)),
-        );
-
-        // Fetch previous week data if not cached
-        if (!cachedWeeks[prevMonday]) {
-          fetchTimeTable(userId, prevMonday);
-        }
-
-        // Fetch next week data if not cached
-        if (!cachedWeeks[nextMonday]) {
-          fetchTimeTable(userId, nextMonday);
-        }
-      }
-    };
-
-    if (shouldRenderAgenda) {
-      fetchAdjacentWeeksData(monday);
-    }
-  }, [monday, shouldRenderAgenda, userId, cachedWeeks, fetchTimeTable]);
-
-  useEffect(() => {
-    const fetchUserIdAndRoles = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        const roles = JSON.parse(
-          (await AsyncStorage.getItem('userRoles')) || '[]',
-        );
-        if (storedUserId) {
-          setUserId(storedUserId);
-          setUserRoles(roles);
-          if (!timeTableData) {
-            fetchTimeTable(storedUserId, monday);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserIdAndRoles = async () => {
+        try {
+          const storedUserId = await AsyncStorage.getItem('userId');
+          const roles = JSON.parse(
+            (await AsyncStorage.getItem('userRoles')) || '[]',
+          );
+          if (storedUserId) {
+            setUserId(storedUserId);
+            setUserRoles(roles);
+            if (currentTab === year) {
+              if (!timeTableData) {
+                fetchTimeTable(storedUserId, monday);
+              } else {
+                const processedItems = processTimeTableData(
+                  timeTableData.details,
+                  roles,
+                );
+                setItems(processedItems);
+                setWeeklyTimeTable(timeTableData);
+                setShouldRenderAgenda(true);
+              }
+            }
           } else {
-            const processedItems = processTimeTableData(
-              timeTableData.details,
-              roles,
-            );
-            setItems(prevItems => ({...prevItems, ...processedItems}));
-            setWeeklyTimeTable(timeTableData);
-            setShouldRenderAgenda(true);
+            console.error('No user ID found in AsyncStorage');
           }
+        } catch (error) {
+          console.error(
+            'Error fetching user ID or roles from AsyncStorage',
+            error,
+          );
         }
-      } catch (error) {
-        console.error(
-          'Error fetching user ID or roles from AsyncStorage',
-          error,
-        );
-      }
-    };
+      };
 
-    fetchUserIdAndRoles();
-  }, [fetchTimeTable, timeTableData, monday]);
+      fetchUserIdAndRoles();
+    }, [
+      fetchTimeTable,
+      currentTab,
+      year,
+      timeTableData,
+      monday,
+      processTimeTableData,
+    ]),
+  );
 
   const convertDateFormat = (dateString: string): string => {
     const [day, month, year] = dateString.split('/');
@@ -392,6 +368,15 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     },
     [fromDatee, toDatee, weeklyTimeTable, items, convertDateFormat, userRoles],
   );
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      if (userId && monday) {
+        fetchTimeTable(userId, monday); // Fetch initial data when component mounts
+      }
+    };
+
+    fetchInitialData();
+  }, [userId, monday, fetchTimeTable]);
 
   const handleWeekChange = useCallback(
     (direction: 'prev' | 'next') => {
@@ -408,38 +393,14 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
       }
       setCurrentMonth(newMonth);
       setMonday(getFormattedDate(currentMonday));
+      console.log(getFormattedDate(currentMonday));
       setSelectedDate(timeToString(currentMonday.getTime()));
       setItems({});
-
-      const newMondayFormatted = getFormattedDate(currentMonday);
-
       if (userId) {
-        if (cachedWeeks[newMondayFormatted]) {
-          const fetchedTimeTableData = cachedWeeks[newMondayFormatted];
-          const processedItems = processTimeTableData(
-            fetchedTimeTableData.details,
-            userRoles,
-          );
-          setWeeklyTimeTable(fetchedTimeTableData);
-          setItems(processedItems);
-          setFromDatee(fetchedTimeTableData.fromDate);
-          setToDatee(fetchedTimeTableData.toDate);
-          setClassData(fetchedTimeTableData.class);
-          setTeacherData(fetchedTimeTableData.mainTeacher);
-        } else {
-          fetchTimeTable(userId, newMondayFormatted);
-        }
+        fetchTimeTable(userId, getFormattedDate(currentMonday)); // Gọi API khi người dùng chuyển tuần
       }
     },
-    [
-      currentMonth,
-      monday,
-      userId,
-      fetchTimeTable,
-      cachedWeeks,
-      userRoles,
-      processTimeTableData,
-    ],
+    [currentMonth, monday, userId, fetchTimeTable],
   );
 
   const handleDayPress = useCallback(
@@ -457,35 +418,13 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
         setSelectedDate(timeToString(mondayOfSelectedDate.getTime()));
         setItems({});
         if (userId) {
-          const newMondayFormatted = getFormattedDate(mondayOfSelectedDate);
-          if (cachedWeeks[newMondayFormatted]) {
-            const fetchedTimeTableData = cachedWeeks[newMondayFormatted];
-            const processedItems = processTimeTableData(
-              fetchedTimeTableData.details,
-              userRoles,
-            );
-            setWeeklyTimeTable(fetchedTimeTableData);
-            setItems(processedItems);
-            setFromDatee(fetchedTimeTableData.fromDate);
-            setToDatee(fetchedTimeTableData.toDate);
-            setClassData(fetchedTimeTableData.class);
-            setTeacherData(fetchedTimeTableData.mainTeacher);
-          } else {
-            fetchTimeTable(userId, newMondayFormatted);
-          }
+          fetchTimeTable(userId, getFormattedDate(mondayOfSelectedDate)); // Gọi API khi người dùng chọn một ngày khác ngoài tuần hiện tại
         }
       } else {
         setSelectedDate(timeToString(selectedDate.getTime()));
       }
     },
-    [
-      currentMonth,
-      userId,
-      fetchTimeTable,
-      cachedWeeks,
-      processTimeTableData,
-      userRoles,
-    ],
+    [currentMonth, userId, fetchTimeTable],
   );
 
   const renderItem = useCallback(
