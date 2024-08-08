@@ -1,17 +1,17 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {
-  View,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
+  View,
 } from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
-import {RootNavigationProps} from './types';
 import {colors} from '../assets/css/colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RootNavigationProps} from './types';
 
 interface DetailScoreFirstYearOneProps {
   navigation: StackNavigationProp<

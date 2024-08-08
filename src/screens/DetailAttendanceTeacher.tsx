@@ -1,20 +1,18 @@
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
-import {colors} from '../assets/css/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CircularProgressComponent from '../components/CircularProgressComponent';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useState} from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {colors} from '../assets/css/colors';
+import CircularProgressComponent from '../components/CircularProgressComponent';
 import {RootNavigationProps} from './types';
-import Loader from '../components/Loader';
 
 interface MyProps {
   navigation: StackNavigationProp<
@@ -120,21 +118,11 @@ const DetailAttendanceTeacher = ({route, navigation}: MyProps) => {
     fetchUserIdAndClasses();
   }, [title, year]);
 
-  // const getTotalAbsent = () => {
-  //   return getTotalAbsentNo() + getTotalAbsentYes();
-  // };
-
   const getTotalAbsent = () => {
     return attendanceSubject
       ? attendanceSubject.filter(item => item.status === 'Vắng').length
       : 0;
   };
-
-  // const getTotalAbsentYes = () => {
-  //   return attendanceSubject
-  //     ? attendanceSubject.filter(item => item.status === 'Vắng có phép').length
-  //     : 0;
-  // };
 
   const getTotalPresent = () => {
     return attendanceSubject
@@ -223,24 +211,6 @@ const DetailAttendanceTeacher = ({route, navigation}: MyProps) => {
             </View>
           </View>
         </View>
-        {/* <View style={[styles.notificationDetails, {marginBottom: 15}]}>
-          <View
-            style={[
-              styles.column,
-              {alignItems: 'flex-start', paddingLeft: 50},
-            ]}></View>
-          <View
-            style={[styles.column, {alignItems: 'flex-start', paddingLeft: 0}]}>
-            <View style={styles.presentRow}>
-              <View style={styles.absentContainer}>
-                <Text style={[styles.presentText, {color: 'white'}]}>
-                  {getTotalAbsent()}
-                </Text>
-              </View>
-              <Text style={styles.textNofi}> Vắng</Text>
-            </View>
-          </View>
-        </View> */}
 
         <ScrollView style={styles.scrollView}>
           {loading ? ( // Show loader when loading

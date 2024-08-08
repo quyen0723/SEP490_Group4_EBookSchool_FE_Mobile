@@ -1,6 +1,6 @@
-import {View, Text, StyleSheet, Image} from 'react-native';
-import React, {useEffect} from 'react';
 import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect} from 'react';
+import {Image, StyleSheet, View} from 'react-native';
 import {RootNavigationProps} from './types';
 
 interface MyProps {

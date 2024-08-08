@@ -1,13 +1,13 @@
-import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {TextInput} from 'react-native-gesture-handler';
-import Loader from '../components/Loader';
-import {colors} from '../assets/css/colors';
-import {RootNavigationProps} from './types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useState} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import AwesomeAlert from 'react-native-awesome-alerts';
+import {TextInput} from 'react-native-gesture-handler';
+import {colors} from '../assets/css/colors';
+import Loader from '../components/Loader';
+import {RootNavigationProps} from './types';
 
 interface User {
   id: string; // Updated to match API response
@@ -44,14 +44,8 @@ interface MyProps {
 }
 
 const Login = ({navigation}: MyProps) => {
-  // const [username, setUsername] = useState<string>('Supervisor');
-  // const [username, setUsername] = useState<string>('BinhDV');
-  // const [username, setUsername] = useState<string>('nghiahh');
-  // const [username, setUsername] = useState<string>('ANHLHS0001');
-  // const [username, setUsername] = useState<string>('ANVHS0002');
+  // const [username, setUsername] = useState<string>('PHONGNVHS0075');
   const [username, setUsername] = useState<string>('');
-  // const [username, setUsername] = useState<string>('belv2');
-  // const [username, setUsername] = useState<string>('admin');
   const [password, setPassword] = useState<string>('aA@123');
   const [loading, setLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<{username?: string; password?: string}>(
@@ -62,7 +56,7 @@ const Login = ({navigation}: MyProps) => {
 
   // Ensure username is reset upon loading the login screen
   useEffect(() => {
-    setUsername('PHONGNVHS0075'); // Reset the username to the new value you want
+    setUsername('PHONGNVHS0075');
   }, []);
 
   const sortSchoolYearsDescending = (schoolYears: string[]) => {
@@ -115,8 +109,6 @@ const Login = ({navigation}: MyProps) => {
       const data: ApiResponse = await response.json();
 
       if (response.ok && data.accessToken) {
-        // Updated condition
-        // Save access token to AsyncStorage
         const loginTimestamp = new Date().getTime();
         await AsyncStorage.setItem('accessToken', data.accessToken);
         await AsyncStorage.setItem('loginTimestamp', loginTimestamp.toString());
@@ -152,8 +144,6 @@ const Login = ({navigation}: MyProps) => {
           await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
           console.log(data.roles);
         }
-        // console.log(data.roles);
-        // await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
         const sortedSchoolYears = sortSchoolYearsDescending(data.schoolYears);
         await AsyncStorage.setItem(
           'userSchoolYears',
@@ -162,10 +152,7 @@ const Login = ({navigation}: MyProps) => {
         console.log('School years sorted and saved:', sortedSchoolYears);
 
         const firstSchoolYear = data.schoolYears[0];
-        // await AsyncStorage.setItem(
-        //   'userClasses',
-        //   JSON.stringify(data.classes[firstSchoolYear]),
-        // );
+
         await AsyncStorage.setItem('userClasses', JSON.stringify(data.classes));
 
         console.log('Navigating to HomeMain with userId:', data.user.id);

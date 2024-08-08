@@ -1,11 +1,6 @@
-import React, {Component, useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import {Table, Row, Rows} from 'react-native-table-component';
-
-// interface ExampleTableState {
-//   tableHead: string[];
-//   tableData: string[][];
-// }
+import React, {useState} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {Row, Rows, Table} from 'react-native-table-component';
 
 const ExampleTable = () => {
   const [tableHead, setTableHead] = useState([

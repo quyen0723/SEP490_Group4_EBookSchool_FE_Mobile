@@ -1,33 +1,17 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Animated,
-  Dimensions,
-} from 'react-native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {RootNavigationProps, TimeTableData} from './types';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {Agenda, LocaleConfig} from 'react-native-calendars';
-import {Avatar, Card, useTheme} from 'react-native-paper';
-import {colors} from '../assets/css/colors';
-import {RouteProp, Theme, useFocusEffect} from '@react-navigation/native';
-import {studentWeeklyTimeTableDates} from '../mock/weeklyTimeTable';
-import {
-  Col,
-  ColProps,
-  Row,
-  Table,
-  TableWrapper,
-} from 'react-native-table-component';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Agenda} from 'react-native-calendars';
+import {Card, useTheme} from 'react-native-paper';
+import {ColProps} from 'react-native-table-component';
+import {colors} from '../assets/css/colors';
 import MemoizedCard from '../components/MemoizedCard';
 import {useTab} from '../components/TabContext';
+import {RootNavigationProps, TimeTableData} from './types';
 
 import {useQueryClient} from '@tanstack/react-query';
-import {useFetchTimeTable} from '../hooks/useFetchTimeTable';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
   route: RouteProp<
@@ -93,7 +77,6 @@ const timeToString = (time: number): string => {
 };
 
 const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
-  // const [monday, setMonday] = useState(getFormattedMondayOfWeek(new Date()));
   const {year, timeTableData} = route.params;
   const {currentTab} = useTab(); // Use currentTab from useTab
   const [monday, setMonday] = useState(
@@ -105,10 +88,7 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   const [weeklyTimeTable, setWeeklyTimeTable] = useState<TimeTableData | null>(
     null,
   );
-  // const [fromDatee, setFromDatee] = useState<string | null>();
-  // const [toDatee, setToDatee] = useState<string | null>();
-  // const [classData, setClassData] = useState<string | null>();
-  // const [teacherData, setTeacherData] = useState<string | null>();
+
   const [fromDatee, setFromDatee] = useState<string | null>(
     timeTableData?.fromDate || null,
   );
@@ -132,256 +112,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   const [shouldRenderAgenda, setShouldRenderAgenda] = useState(false);
   const [shouldFetch, setShouldFetch] = useState(false);
   const agendaRef = useRef(null);
-  // const [items, setItems] = useState<Items>({});
-  // const [currentMonth, setCurrentMonth] = useState(new Date());
-
-  // const fetchTimeTable = useCallback(
-  //   async (userId: string) => {
-  //     console.log('AAAAAAAAAAAAAAAAAAAAAAA');
-  //     try {
-  //       const accessToken = await AsyncStorage.getItem('accessToken');
-  //       const roles = JSON.parse(
-  //         (await AsyncStorage.getItem('userRoles')) || '[]',
-  //       );
-  //       let url = '';
-
-  //       if (roles.includes('Student')) {
-  //         url = `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`;
-  //       } else if (
-  //         roles.includes('Subject Teacher') ||
-  //         roles.includes('Admin')
-  //       ) {
-  //         url = `https://orbapi.click/api/Schedules/SubjectTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
-  //       } else if (roles.includes('HomeroomTeacher')) {
-  //         url = `https://orbapi.click/api/Schedules/HomeroomTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
-  //       }
-  //       console.log('yeyyyyyyyy', year);
-  //       if (url) {
-  //         const response = await fetch(url, {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //           },
-  //         });
-  //         const textResponse = await response.text();
-  //         console.log('Response:', textResponse);
-
-  //         if (textResponse === 'Không tìm thấy lớp học') {
-  //           const emptyItems: Items = {};
-  //           const fromDate = new Date(monday.split('/').reverse().join('-'));
-  //           const toDate = new Date(fromDate);
-  //           toDate.setDate(fromDate.getDate() + 6);
-
-  //           for (
-  //             let date = fromDate;
-  //             date <= toDate;
-  //             date.setDate(date.getDate() + 1)
-  //           ) {
-  //             const strTime = timeToString(date.getTime());
-  //             emptyItems[strTime] = [
-  //               {
-  //                 name: 'Không tìm thấy lớp học',
-  //                 slotTime: '',
-  //                 teacherOrClassroom: '',
-  //                 slot: '',
-  //                 status: '',
-  //               },
-  //             ];
-  //           }
-  //           setItems(emptyItems);
-  //         } else {
-  //           const timeTableData = JSON.parse(textResponse);
-  //           console.log('Time table data TRƯỚC KHI MAP:', timeTableData);
-
-  //           if (timeTableData) {
-  //             const processedItems = processTimeTableData(timeTableData, roles);
-  //             setWeeklyTimeTable(timeTableData);
-  //             setItems(processedItems);
-  //             setFromDatee(timeTableData.fromDate);
-  //             setToDatee(timeTableData.toDate);
-  //             setClassData(timeTableData.class);
-  //             setTeacherData(timeTableData.mainTeacher);
-  //             setShouldRenderAgenda(true);
-  //           } else {
-  //             console.error('Received empty timetable data');
-  //           }
-  //         }
-  //       } else {
-  //         console.error('No valid role found for fetching timetable');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching timetable data', error);
-  //     }
-  //   },
-  //   [monday, year], // dependency array
-  // );
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchUserIdAndRoles = async () => {
-  //       try {
-  //         const storedUserId = await AsyncStorage.getItem('userId');
-  //         const roles = JSON.parse(
-  //           (await AsyncStorage.getItem('userRoles')) || '[]',
-  //         );
-  //         if (storedUserId) {
-  //           setUserId(storedUserId);
-  //           setUserRoles(roles);
-  //           if (currentTab === year) {
-  //             fetchTimeTable(storedUserId);
-  //           }
-  //         } else {
-  //           console.error('No user ID found in AsyncStorage');
-  //         }
-  //       } catch (error) {
-  //         console.error(
-  //           'Error fetching user ID or roles from AsyncStorage',
-  //           error,
-  //         );
-  //       }
-  //     };
-
-  //     fetchUserIdAndRoles();
-  //   }, [fetchTimeTable, currentTab, year]),
-  // );
-
-  // const {
-  //   data: timetableData,
-  //   isLoading,
-  //   error,
-  //   refetch,
-  // } = useFetchTimeTable(userId!, year, monday);
-
-  // const {
-  //   data: timetableData,
-  //   isLoading,
-  //   error,
-  //   refetch,
-  //   isFetching,
-  //   isStale,
-  // } = useFetchTimeTable(userId!, year, monday);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchUserIdAndRoles = async () => {
-  //       try {
-  //         const storedUserId = await AsyncStorage.getItem('userId');
-  //         const roles = JSON.parse(
-  //           (await AsyncStorage.getItem('userRoles')) || '[]',
-  //         );
-  //         if (storedUserId) {
-  //           setUserId(storedUserId);
-  //           setUserRoles(roles);
-  //           console.log('User ID and roles fetched:', storedUserId, roles);
-  //         } else {
-  //           console.error('No user ID found in AsyncStorage');
-  //         }
-  //       } catch (error) {
-  //         console.error(
-  //           'Error fetching user ID or roles from AsyncStorage',
-  //           error,
-  //         );
-  //       }
-  //     };
-
-  //     fetchUserIdAndRoles();
-  //   }, []),
-  // );
-
-  // useEffect(() => {
-  //   // Make sure userId is not null before fetching the timetable
-  //   if (userId !== null) {
-  //     refetch();
-  //   }
-  // }, [userId, refetch]);
-
-  // useEffect(() => {
-  //   if (currentTab === year) {
-  //     console.log('Refetching data for year:', year);
-  //     refetch();
-  //   }
-  // }, [refetch, currentTab, year]);
-  // useEffect(() => {
-  //   if (userId && currentTab === year) {
-  //     console.log('Refetching data for year:', year);
-  //     refetch();
-  //     console.log('userId && currentTab === year');
-  //   }
-  // }, [userId, currentTab, year, refetch]);
-
-  // useEffect(() => {
-  //   if (userId !== null && !isFetching && !timetableData) {
-  //     refetch();
-  //     console.log('userId !== null && !isFetching && !timetableData');
-  //   }
-  // }, [userId, timetableData, isFetching, refetch]);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     if (currentTab === year) {
-  //       console.log('Refetching data for year:', year);
-  //       refetch();
-  //     }
-  //   }, [refetch, currentTab, year]),
-  // );
-
-  // useEffect(() => {
-  //   // console.log(
-  //   //   'Fetching status:',
-  //   //   isFetching ? 'Fetching from API...' : 'Data from cache',
-  //   // );
-  //   // console.log('isStale:', isStale);
-  //   console.log('KKKKKK', timetableData);
-  //   if (timetableData) {
-  //     if (timetableData.message === 'Không tìm thấy lớp học') {
-  //       const emptyItems: Items = {};
-  //       const fromDate = new Date(monday.split('/').reverse().join('-'));
-  //       const toDate = new Date(fromDate);
-  //       toDate.setDate(fromDate.getDate() + 6);
-  //       for (
-  //         let date = fromDate;
-  //         date <= toDate;
-  //         date.setDate(date.getDate() + 1)
-  //       ) {
-  //         const strTime = timeToString(date.getTime());
-  //         emptyItems[strTime] = [
-  //           {
-  //             name: 'Không tìm thấy lớp học',
-  //             slotTime: '',
-  //             teacherOrClassroom: '',
-  //             slot: '',
-  //             status: '',
-  //           },
-  //         ];
-  //       }
-  //       setItems(emptyItems);
-  //     } else {
-  //       const processedItems = processTimeTableData(
-  //         timetableData.data,
-  //         userRoles,
-  //       );
-  //       setItems(processedItems);
-  //       setFromDatee(timetableData.data.fromDate);
-  //       setToDatee(timetableData.data.toDate);
-  //       setClassData(timetableData.data.class);
-  //       setTeacherData(timetableData.data.mainTeacher);
-  //       setShouldRenderAgenda(true);
-  //       console.log('Processed Items:', processedItems);
-  //     }
-  //   }
-  // }, [timetableData, userRoles]);
-
-  // useEffect(() => {
-  //   navigation.setOptions({
-  //     title: 'Thời khóa biểu',
-  //     headerLeft: () => (
-  //       <TouchableOpacity onPress={() => navigation.goBack()}>
-  //         <Image
-  //           style={styles.imge}
-  //           source={require('../assets/images/icons/Back.png')}
-  //         />
-  //       </TouchableOpacity>
-  //     ),
-  //   });
-  // }, [navigation]);
 
   const processTimeTableData = useCallback(
     (timeTableData: TimeTableData['details'], roles: string[]): Items => {
@@ -580,8 +310,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     fetchUserIdAndRoles();
   }, [fetchTimeTable, timeTableData, monday]);
 
-  // const fromDate = studentWeeklyTimeTableDates.data.fromDate;
-  // const toDate = studentWeeklyTimeTableDates.data.toDate;
   const convertDateFormat = (dateString: string): string => {
     const [day, month, year] = dateString.split('/');
     const newDateString = `${year}-${month}-${day}`;
@@ -664,68 +392,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     },
     [fromDatee, toDatee, weeklyTimeTable, items, convertDateFormat, userRoles],
   );
-
-  // const getSlotsForDay = (date: Date): any[] | null => {
-  //   const dayOfWeek = date.getDay();
-  //   const weekDate = getWeekDayName(dayOfWeek);
-  //   if (weekDate !== '') {
-  //     const dayDetails = weeklyTimeTable?.data.details.find(
-  //       detail => detail.weekDate === weekDate,
-  //     );
-
-  //     if (dayDetails) {
-  //       return dayDetails.slots;
-  //     }
-  //   }
-  //   return null;
-  // };
-
-  // const vietnameseDayToNumberMapping: {[key: string]: number} = {
-  //   'Chủ Nhật': 0,
-  //   'Thứ Hai': 1,
-  //   'Thứ Ba': 2,
-  //   'Thứ Tư': 3,
-  //   'Thứ Năm': 4,
-  //   'Thứ Sáu': 5,
-  //   'Thứ Bảy': 6,
-  // };
-
-  // const vietnameseDayToEnglishDayMapping: {[key: string]: string} = {
-  //   'Chủ Nhật': 'Sun',
-  //   'Thứ Hai': 'Mon',
-  //   'Thứ Ba': 'Tue',
-  //   'Thứ Tư': 'Wed',
-  //   'Thứ Năm': 'Thu',
-  //   'Thứ Sáu': 'Fri',
-  //   'Thứ Bảy': 'Sat',
-  // };
-
-  // const vietnameseDayToNumber = (dayText: string): number | undefined => {
-  //   return vietnameseDayToNumberMapping[dayText];
-  // };
-
-  // const getWeekDayName = (dayIndex: number): string => {
-  //   const vietnameseDay = Object.keys(vietnameseDayToNumberMapping).find(
-  //     key => vietnameseDayToNumberMapping[key] === dayIndex,
-  //   );
-  //   if (vietnameseDay) {
-  //     return vietnameseDayToEnglishDayMapping[vietnameseDay];
-  //   }
-  //   return '';
-  // };
-  // const CustomCol: React.FC<CustomColProps> = ({widthArr, ...rest}) => {
-  //   return <Col {...rest} />;
-  // };
-
-  // useEffect(() => {
-  //   const fetchInitialData = async () => {
-  //     if (userId && monday) {
-  //       fetchTimeTable(userId, monday); // Fetch initial data when component mounts
-  //     }
-  //   };
-
-  //   fetchInitialData();
-  // }, [userId, monday, fetchTimeTable]);
 
   const handleWeekChange = useCallback(
     (direction: 'prev' | 'next') => {
@@ -951,34 +617,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     },
     [items],
   );
-
-  const renderHeader = (date: any) => {
-    const month = date.month ? date.month : date.toString().split(' ')[1];
-    const year = date.year ? date.year : date.toString().split(' ')[3];
-    return (
-      <View style={{padding: 10, alignItems: 'center'}}>
-        <Text>{`${month.padStart(2, '0')}/${year}`}</Text>
-      </View>
-    );
-  };
-
-  const getMonthName = (monthIndex: number): string => {
-    const monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return monthNames[monthIndex];
-  };
   const renderCalendarHeader = () => {
     const monthName = currentMonth.toLocaleString('default', {month: 'long'});
     const year = currentMonth.getFullYear();
@@ -999,9 +637,7 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     const endDay = formatter.format(endDate).split('/')[0].padStart(2, '0'); // Ensure two digits
     const endMonth = formatter.format(endDate).split('/')[1].padStart(2, '0'); // Ensure two digits
 
-    // const weekRange = `${startDay}/${startMonth} - ${endDay}/${endMonth}`;
     const weekRange = `${startMonth}/${startDay} - ${endMonth}/${endDay}`;
-    // console.log(weekRange);
     return (
       <View>
         <View style={styles.textCenter}>
@@ -1022,15 +658,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
       </View>
     );
   };
-
-  // const handleDayPress = (day: any) => {
-  //   const selectedDate = new Date(day.timestamp);
-  //   const monday = getMondayOfWeek(selectedDate);
-  //   setCurrentMonth(monday);
-  //   setMonday(getFormattedDate(monday));
-  //   setSelectedDate(timeToString(monday.getTime()));
-  //   setItems({});
-  // };
 
   const [agendaCurrentMonth, setAgendaCurrentMonth] = useState(new Date());
   const handleVisibleMonthsChange = (months: any[]) => {
@@ -1053,30 +680,6 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
       </View>
 
       {renderCalendarHeader()}
-      {/* <Agenda
-        key={agendaCurrentMonth.getTime()} // Sử dụng key duy nhất dựa trên thời gian của currentMonth
-        ref={agendaRef}
-        items={items}
-        loadItemsForMonth={loadItems}
-        selected={currentMonth.toISOString().split('T')[0]}
-        // selected={timeToString(getMondayOfCurrentWeek().getTime())}
-        // renderItem={renderItem}
-        renderItem={renderItem}
-        current={currentMonth}
-        onDayPress={handleDayPress}
-        VisibleMonthsChange={handleVisibleMonthsChange}
-        firstDay={1}
-        theme={{
-          dayTextColor: colors.primaryColor,
-          textSectionTitleColor: theme.colors.onBackground,
-          textMonthFontWeight: 'bold',
-          todayTextColor: colors.blackColor,
-          todayDotColor: colors.blackColor,
-          textDayHeaderFontWeight: 'bold',
-          selectedDayBackgroundColor: 'transparent',
-          selectedDayTextColor: colors.primaryColor,
-        }}
-      /> */}
       {shouldRenderAgenda && (
         <Agenda
           key={agendaCurrentMonth.getTime()}
@@ -1109,7 +712,6 @@ export default WeeklyTimeTable;
 
 const styles = StyleSheet.create({
   col: {
-    // Các thuộc tính style cho cột
     justifyContent: 'center', // Canh giữa nội dung của cột
     alignItems: 'center', // Canh giữa theo chiều dọc của cột
   },
@@ -1119,15 +721,12 @@ const styles = StyleSheet.create({
     padding: 5,
     paddingTop: 30,
     margin: 0,
-    // height: 80,
   },
-  // Style cho row
   row: {
     flexDirection: 'row',
     height: 40,
     backgroundColor: colors.whiteColor,
   },
-  // Style cho text trong row
   text: {
     textAlign: 'center',
     fontWeight: 'bold',
@@ -1235,155 +834,3 @@ const styles = StyleSheet.create({
   },
   notificationsDate: {color: 'black'},
 });
-
-//   const handleWeekChange = (direction: 'prev' | 'next') => {
-//   const currentMonday = getMondayOfWeek(new Date(monday.split('/').reverse().join('-')));
-//   if (direction === 'prev') {
-//     currentMonday.setDate(currentMonday.getDate() - 7); // Di chuyển đến thứ Hai tuần trước
-//   } else {
-//     currentMonday.setDate(currentMonday.getDate() + 7); // Di chuyển đến thứ Hai tuần tiếp theo
-//   }
-//   setMonday(getFormattedDate(currentMonday));
-// };
-
-// const handleMonthChange = (direction: 'prev' | 'next') => {
-//   const newMonth = new Date(currentMonth);
-//   if (direction === 'prev') {
-//     newMonth.setDate(newMonth.getDate() - 7); // Chuyển đến tuần trước đó
-//   } else {
-//     newMonth.setDate(newMonth.getDate() + 7); // Chuyển đến tuần tiếp theo
-//   }
-//   setCurrentMonth(newMonth);
-// };
-// const handleDayPress = (day: any) => {
-//   const selectedDate = new Date(day.timestamp);
-//   // Cập nhật currentMonth với ngày được chọn
-//   setCurrentMonth(new Date(day.timestamp));
-//   setMonday(getFormattedDate(selectedDate));
-// };
-
-// const getSubjectForId = (id: number): string => {
-//   const dayDetails = studentWeeklyTimeTableDates.data.details.find(
-//     detail => detail.id === id,
-//   );
-
-//   if (dayDetails) {
-//     // Lấy ngày tương ứng với id
-//     switch (id) {
-//       case 1:
-//         return 'Mon';
-//       case 2:
-//         return 'Tue';
-//       case 3:
-//         return 'Wed';
-//       case 4:
-//         return 'Thu';
-//       case 5:
-//         return 'Fri';
-//       case 6:
-//         return 'Sat';
-//       case 7:
-//         return 'Sun';
-//       default:
-//         return '';
-//     }
-//   }
-//   return '';
-// };
-
-// const MONDAY = 1;
-// const TUESDAY = 2;
-// const WEDNESDAY = 3;
-// const THURSDAY = 4;
-// const FRIDAY = 5;
-// const SATURDAY = 6;
-// const SUNDAY = 7;
-
-// const getSubjectForDay = (id: number): string => {
-//   let day: string;
-//   switch (id) {
-//     case MONDAY:
-//       day = 'Mon';
-//       break;
-//     case TUESDAY:
-//       day = 'Tue';
-//       break;
-//     case WEDNESDAY:
-//       day = 'Wed';
-//       break;
-//     case THURSDAY:
-//       day = 'Thu';
-//       break;
-//     case FRIDAY:
-//       day = 'Fri';
-//       break;
-//     case SATURDAY:
-//       day = 'Sat';
-//       break;
-//     case SUNDAY:
-//       day = 'Sun';
-//       break;
-//     default:
-//       day = '';
-//   }
-//   // console.log('id:', id);
-
-//   // console.log('dayyy:', day);
-
-//   const dayDetails = studentWeeklyTimeTableDates.data.details.find(
-//     detail => detail.id === id,
-//   );
-
-//   if (dayDetails) {
-//     const subjectDetails = dayDetails.slots.find(slot => slot.id === id);
-//     if (subjectDetails) {
-//       return subjectDetails.subject;
-//     }
-//   }
-//   return '';
-// };
-
-// Kết quả: "23/05/2024" (đối với ngày 20/05/2024)
-
-// const getFormattedDate = (date: Date): string => {
-//   const day: string = String(date.getDate()).padStart(2, '0');
-//   const month: string = String(date.getMonth() + 1).padStart(2, '0');
-//   return `${day}/${month}`;
-// };
-
-// const getWeeksInYear = (year: number): string[] => {
-//   let currentDate: Date = new Date(year, 0, 1);
-//   const weeks: string[] = [];
-
-//   if (currentDate.getDay() !== 1) {
-//     currentDate.setDate(
-//       currentDate.getDate() -
-//         currentDate.getDay() +
-//         (currentDate.getDay() === 0 ? -6 : 1),
-//     );
-//   }
-
-//   while (
-//     currentDate.getFullYear() <= year ||
-//     (currentDate.getFullYear() === year + 1 && currentDate.getDay() !== 1)
-//   ) {
-//     const weekStart: Date = new Date(currentDate);
-//     currentDate.setDate(currentDate.getDate() + 6);
-//     const weekEnd: Date = new Date(currentDate);
-
-//     weeks.push(`${getFormattedDate(weekStart)}-${getFormattedDate(weekEnd)}`);
-
-//     currentDate.setDate(currentDate.getDate() + 1);
-//   }
-
-//   return weeks;
-// };
-
-// console.log(getWeeksInYear(2024));
-
-// const customTheme: any = {
-//   dayTextColor: colors.primaryColor,
-//   textSectionTitleColor: theme.colors.onBackground,
-//   textMonthFontWeight: 'bold',
-//   dayNamesShort: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
-// };

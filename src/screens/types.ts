@@ -4,8 +4,6 @@ export type RootNavigationProps = {
   Splash: undefined;
   Login: undefined;
   HomeMain: undefined;
-  // Notification: undefined;
-  // Profile: undefined;
   ButtonTab: undefined;
   Profile: {user: User};
   Notification: undefined;
@@ -17,9 +15,6 @@ export type RootNavigationProps = {
   Attendance: undefined;
   ScoreMain: undefined;
   ScoreFirstYear: undefined;
-  ScoreSecondYear: undefined;
-  ScoreThirdYear: undefined;
-  ScoreFourthYear: undefined;
   Calculate: {scores: ScoreByStudentsBySubjectsData} | undefined;
   ButtonTopTab: undefined;
   DetailScoreFirstYearOne: undefined;

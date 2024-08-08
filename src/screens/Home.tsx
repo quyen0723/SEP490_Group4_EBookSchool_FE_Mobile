@@ -1,33 +1,21 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  StatusBar,
-  TouchableOpacity,
-  FlatList,
-  Image,
-  Dimensions,
-  SafeAreaView,
-  Alert,
-  TextInput,
-  Button,
-  InteractionManager,
-} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {StackNavigationProp} from '@react-navigation/stack';
-import Splash from './Splash';
-import {
-  NavigationContainer,
-  useFocusEffect,
-  useIsFocused,
-  useRoute,
-} from '@react-navigation/native';
-import Loader from '../components/Loader';
-import {colors} from '../assets/css/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   DrawerNavigationProp,
   createDrawerNavigator,
 } from '@react-navigation/drawer';
+import {useFocusEffect} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {
+  FlatList,
+  Image,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {colors} from '../assets/css/colors';
 import {
   ItemType,
   SectionType,
@@ -36,21 +24,13 @@ import {
   sectionByTeacher,
 } from '../components/Data';
 import {handleLogout} from '../components/Handle';
-import ButtonTab from '../navigations/ButtonTab';
-import {RootNavigationProps} from './types';
-import Profile from './Profile';
-import Notification from './Notification';
-import {useNavigation} from '@react-navigation/native';
-import WeeklyTimeTable from './WeeklyTimeTable';
 import Attendance from './Attendance';
-import ScoreMain from './ScoreMain';
 import Calculate from './Calculate';
+import Notification from './Notification';
+import Profile from './Profile';
+import ScoreMain from './ScoreMain';
+import {RootNavigationProps} from './types';
 import WeeklyTimeTableMain from './WeeklyTimeTableMain';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFetchTimeTable} from '../hooks/useFetchTimeTable';
-// interface MyProps {
-//   navigation: StackNavigationProp<RootNavigationProps, 'Home'>;
-// }
 
 interface MyProps {
   navigation: DrawerNavigationProp<RootNavigationProps, 'Home'>; // Sử dụng DrawerNavigationProp thay vì StackNavigationProp
@@ -104,11 +84,6 @@ const handleItemClickAction = ({
   role: string | null;
   timeTableData: any;
 }) => {
-  // if (!role && (itemId === '2' || itemId === '4')) {
-  //   console.log('Navigation prevented for item:', itemId);
-  //   return;
-  // }
-
   if (navigation) {
     const itemId = item.id.toString();
     if (itemId === '1') {
@@ -116,11 +91,7 @@ const handleItemClickAction = ({
       navigation.navigate('Notification');
     } else if (itemId === '2') {
       console.log('hhhhhhhhhhhhhhhhh', role);
-      // if (role === 'Admin') {
-      //   navigation.navigate('WeeklyTimeTableTeacher');
-      // } else {
       navigation.navigate('WeeklyTimeTableMain', {timeTableData});
-      // }
     } else if (itemId === '3') {
       navigation.navigate('Calculate');
     } else if (itemId === '4') {
@@ -214,8 +185,6 @@ function HomeScreen({navigation}: MyProps) {
   };
 
   const fetchTimeTable = useCallback(async () => {
-    // if (!userId || !year) return;
-
     console.log('Fetching timetable...');
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
@@ -266,7 +235,6 @@ function HomeScreen({navigation}: MyProps) {
     }
   }, [userId, year, fetchTimeTable]);
 
-  // const data = role == 'Student' ? sectionByStudent : sectionByTeacher;
   const data =
     role === 'Student'
       ? sectionByStudent
@@ -293,14 +261,6 @@ function HomeScreen({navigation}: MyProps) {
     </View>
   );
 }
-
-// function LogoutScreen({navigation}: MyProps) {
-//   return (
-//     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-//       <Button onPress={() => handleLogout(navigation)} title="Đăng xuất" />
-//     </View>
-//   );
-// }
 
 const Drawer = createDrawerNavigator();
 
@@ -525,7 +485,6 @@ const styles = StyleSheet.create({
     width: 160,
     height: 140,
     alignItems: 'center',
-    // borderWidth: 0.5,
     color: 'black',
     margin: 10,
     borderRadius: 20,
@@ -561,87 +520,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-// useEffect(() => {
-//   const fetchUserRole = async () => {
-//     try {
-//       const storedRole = await AsyncStorage.getItem('userRoles');
-//       if (storedRole) {
-//         const parsedRoles = JSON.parse(storedRole);
-//         setRole(parsedRoles[0]);
-//         // console.log(parsedRoles[0]);
-//         console.log('User role:', parsedRoles[0]);
-//       } else {
-//         console.error('No user roles found in AsyncStorage');
-//       }
-//     } catch (error) {
-//       console.error('Error fetching user roles from AsyncStorage', error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   fetchUserRole();
-// }, []);
-// useFocusEffect(
-//   useCallback(() => {
-//     const fetchUserRole = async () => {
-//       try {
-//         const storedRole = await AsyncStorage.getItem('userRoles');
-//         if (storedRole) {
-//           const parsedRoles = JSON.parse(storedRole);
-//           setRole(parsedRoles[0]);
-//           console.log('User role:', parsedRoles[0]); // In ra vai trò đã được đặt
-//         } else {
-//           console.error('No user roles found in AsyncStorage');
-//         }
-//       } catch (error) {
-//         console.error('Error fetching user roles from AsyncStorage', error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchUserRole();
-//     // fetchAdditionalData();
-//   }, [navigation]), // Chạy lại khi navigation thay đổi
-// );
-
-// const renderFlatList = ({item}: {item: SectionType}) => (
-//   <>
-//     {renderSectionHeader({section: item})}
-//     <FlatList
-//       data={item.data}
-//       renderItem={renderItem}
-//       keyExtractor={item => item.id.toString()}
-//       numColumns={item.data.length === 1 ? 1 : 2}
-//       contentContainerStyle={styles.contentContainerStyle}
-//     />
-//   </>
-// );
-
-// function handleLogout(
-//   navigation: StackNavigationProp<RootNavigationProps, 'Home'>,
-// ) {
-//   Alert.alert(
-//     'Xác nhận',
-//     'Bạn muốn đăng xuất phải không?',
-//     [
-//       {a
-//         text: 'Không',
-//         onPress: () => console.log('Không'),
-//         style: 'cancel',
-//       },
-//       {
-//         text: 'Có',
-//         onPress: () => navigation.navigate('Login'), // Điều hướng đến màn hình đăng nhập
-//       },
-//     ],
-//     {cancelable: false},
-//   );
-// }
-
-// const renderSectionHeader = ({section: {title}}: {section: SectionType}) => (
-//   <View style={styles.sectionContainer}>
-//     <Text style={styles.sectionHeader}>{title}</Text>
-//   </View>
-// );

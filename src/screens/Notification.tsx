@@ -1,20 +1,19 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useIsFocused} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useState} from 'react';
 import {
-  View,
+  FlatList,
+  Image,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  FlatList,
-  Button,
+  View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootNavigationProps} from './types';
 import {colors} from '../assets/css/colors';
 import {ItemType} from '../components/Data';
-import {useIsFocused} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RootNavigationProps} from './types';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'Notification'>;

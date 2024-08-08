@@ -1,15 +1,15 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
   Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import {colors} from '../assets/css/colors';
 import RenderHTML from 'react-native-render-html';
+import {colors} from '../assets/css/colors';
 
 const NotificationDetail = ({route, navigation}) => {
   // Extract the notification object from the route parameters

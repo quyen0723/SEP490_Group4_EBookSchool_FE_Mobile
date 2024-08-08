@@ -1,22 +1,12 @@
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootNavigationProps} from './types';
-import TouchableOpacityComponent from '../components/TouchableOpacityComponent';
-import {scoreByStudent} from '../mock/score';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, ScrollView, StyleSheet, View} from 'react-native';
 import {colors} from '../assets/css/colors';
 import TouchableOpacityAttendance from '../components/TouchableOpacityAttendance';
-import {RouteProp} from '@react-navigation/native';
-import Loader from '../components/Loader';
+import {scoreByStudent} from '../mock/score';
+import {RootNavigationProps} from './types';
 
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'DetailAttendanceFirst'>;
@@ -242,46 +232,3 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
 });
-
-// const data = await response.json();
-// console.log('Data fetched from API:', JSON.stringify(data, null, 2));
-// if (data.success) {
-//   //   data.data.details.forEach((subject: Subject) => {
-//   //     console.log(`Subject: ${subject.subject}`);
-//   //     if (subject.scores.length > 0) {
-//   //       subject.scores.forEach((score, index) => {
-//   //         console.log(`Score ${index}:`, JSON.stringify(score, null, 2));
-//   //       });
-//   //     } else {
-//   //       console.log(`Scores array for ${subject.subject} is empty`);
-//   //     }
-//   //   });
-//   //   console.log(data);
-//   setStudentAttendances(data.data);
-//   // setStudentScoresValue(data.data.details.scores);
-// } else {
-//   console.error('Error:', data.message);
-// }
-
-// const getStartDate = (schoolYear: string) => {
-//   const [startYear] = schoolYear.split('-');
-//   return `01/01/${startYear}`;
-// };
-
-// const getEndDate = (schoolYear: string) => {
-//   const [, endYear] = schoolYear.split('-');
-//   return `31/12/${endYear}`;
-// };
-
-{
-  /* <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            style={styles.imge}
-            source={require('../assets/images/icons/Back.png')}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chi tiết điểm danh</Text>
-
-      </View> */
-}

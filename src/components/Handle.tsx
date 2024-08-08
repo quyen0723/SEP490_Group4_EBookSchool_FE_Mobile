@@ -1,8 +1,8 @@
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootNavigationProps} from '../navigations/AppNavigator';
-import {Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {DrawerActions} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {Alert} from 'react-native';
+import {RootNavigationProps} from '../navigations/AppNavigator';
 
 export function handleLogout(
   navigation: StackNavigationProp<RootNavigationProps, 'Home'>,
