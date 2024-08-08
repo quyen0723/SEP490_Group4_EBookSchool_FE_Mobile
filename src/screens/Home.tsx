@@ -31,8 +31,9 @@ import {
 import {
   ItemType,
   SectionType,
+  sectionByParent,
+  sectionByStudent,
   sectionByTeacher,
-  sections,
 } from '../components/Data';
 import {handleLogout} from '../components/Handle';
 import ButtonTab from '../navigations/ButtonTab';
@@ -42,7 +43,7 @@ import Notification from './Notification';
 import {useNavigation} from '@react-navigation/native';
 import WeeklyTimeTable from './WeeklyTimeTable';
 import Attendance from './Attendance';
-import Score from './ScoreMain';
+import ScoreMain from './ScoreMain';
 import Calculate from './Calculate';
 import WeeklyTimeTableMain from './WeeklyTimeTableMain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -69,19 +70,19 @@ const renderFlatList = ({
   item,
   navigation,
   role,
-  timetableData,
+  timeTableData,
 }: {
   item: SectionType;
   navigation?: MyProps;
   role: string | null;
-  timetableData: any;
+  timeTableData: any;
 }) => (
   <>
     {renderSectionHeader({section: item})}
     <FlatList
       data={item.data}
       renderItem={({item}) =>
-        renderItem({item, navigation: navigation!, role, timetableData})
+        renderItem({item, navigation: navigation!, role, timeTableData})
       }
       keyExtractor={item => item.id.toString()}
       numColumns={item.data.length === 1 ? 1 : 2}
@@ -96,12 +97,12 @@ const handleItemClickAction = ({
   item,
   navigation,
   role,
-  timetableData,
+  timeTableData,
 }: {
   item: ItemType;
   navigation?: MyProps;
   role: string | null;
-  timetableData: any;
+  timeTableData: any;
 }) => {
   // if (!role && (itemId === '2' || itemId === '4')) {
   //   console.log('Navigation prevented for item:', itemId);
@@ -118,14 +119,14 @@ const handleItemClickAction = ({
       // if (role === 'Admin') {
       //   navigation.navigate('WeeklyTimeTableTeacher');
       // } else {
-      navigation.navigate('WeeklyTimeTableMain', {timetableData});
+      navigation.navigate('WeeklyTimeTableMain', {timeTableData});
       // }
     } else if (itemId === '3') {
       navigation.navigate('Calculate');
     } else if (itemId === '4') {
       navigation.navigate('Attendance');
     } else if (itemId === '5') {
-      navigation.navigate('Score');
+      navigation.navigate('ScoreMain');
     } else {
       // Handle other item IDs or show an alert
       console.log('Item ID:', item.id);
@@ -144,15 +145,15 @@ const renderItem = ({
   item,
   navigation,
   role,
-  timetableData,
+  timeTableData,
 }: {
   item: ItemType;
   navigation: MyProps;
   role: string | null;
-  timetableData: any;
+  timeTableData: any;
 }) => {
   const handleItemClick = () => {
-    handleItemClickAction({item, navigation, role, timetableData});
+    handleItemClickAction({item, navigation, role, timeTableData});
   };
 
   return (
@@ -168,51 +169,11 @@ function HomeScreen({navigation}: MyProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
-  const [monday, setMonday] = useState<string | null>(null);
-  // useEffect(() => {
-  //   const fetchUserRole = async () => {
-  //     try {
-  //       const storedRole = await AsyncStorage.getItem('userRoles');
-  //       if (storedRole) {
-  //         const parsedRoles = JSON.parse(storedRole);
-  //         setRole(parsedRoles[0]);
-  //         // console.log(parsedRoles[0]);
-  //         console.log('User role:', parsedRoles[0]);
-  //       } else {
-  //         console.error('No user roles found in AsyncStorage');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching user roles from AsyncStorage', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+  const [monday, setMonday] = useState<string>(
+    getFormattedMondayOfCurrentWeek(),
+  );
+  const [timeTableData, setTimeTableData] = useState<any>(null);
 
-  //   fetchUserRole();
-  // }, []);
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchUserRole = async () => {
-  //       try {
-  //         const storedRole = await AsyncStorage.getItem('userRoles');
-  //         if (storedRole) {
-  //           const parsedRoles = JSON.parse(storedRole);
-  //           setRole(parsedRoles[0]);
-  //           console.log('User role:', parsedRoles[0]); // In ra vai trò đã được đặt
-  //         } else {
-  //           console.error('No user roles found in AsyncStorage');
-  //         }
-  //       } catch (error) {
-  //         console.error('Error fetching user roles from AsyncStorage', error);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };
-
-  //     fetchUserRole();
-  //     // fetchAdditionalData();
-  //   }, [navigation]), // Chạy lại khi navigation thay đổi
-  // );
   const fetchUserRole = async () => {
     try {
       const storedRole = await AsyncStorage.getItem('userRoles');
@@ -252,51 +213,67 @@ function HomeScreen({navigation}: MyProps) {
     }
   };
 
+  const fetchTimeTable = useCallback(async () => {
+    // if (!userId || !year) return;
+
+    console.log('Fetching timetable...');
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const roles = JSON.parse(
+        (await AsyncStorage.getItem('userRoles')) || '[]',
+      );
+      let url = '';
+
+      if (roles.includes('Student') || roles.includes('Parent')) {
+        url = `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+      } else if (roles.includes('Subject Teacher') || roles.includes('Admin')) {
+        url = `https://orbapi.click/api/Schedules/SubjectTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+      } else if (roles.includes('HomeroomTeacher')) {
+        url = `https://orbapi.click/api/Schedules/HomeroomTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+      }
+
+      console.log('Fetching timetable for year:', year);
+      if (url) {
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const textResponse = await response.text();
+        console.log('Response:', textResponse);
+        if (textResponse === 'Không tìm thấy lớp học') {
+          return {data: null, message: 'Không tìm thấy lớp học'};
+        }
+        const data = JSON.parse(textResponse);
+        setTimeTableData(data);
+        return {data, message: ''};
+      } else {
+        console.error('No valid role found for fetching timetable');
+      }
+    } catch (error) {
+      console.error('Error fetching timetable data', error);
+    }
+  }, [userId, year, monday]);
   useFocusEffect(
     useCallback(() => {
       fetchUserRole();
       fetchAdditionalData();
     }, [navigation]),
   );
-  // const {data: timetableData, refetch} = useFetchTimeTable(
-  //   userId!,
-  //   year!,
-  //   monday!,
-  // );
-  const {
-    data: timetableData,
-    refetch,
-    isFetching,
-    isStale,
-    isPreviousData,
-  } = useFetchTimeTable(userId!, year!, monday!);
   useEffect(() => {
-    if (userId && year && monday) {
-      InteractionManager.runAfterInteractions(() => {
-        refetch();
-      });
+    if (userId && year) {
+      fetchTimeTable();
     }
-  }, [userId, year, monday, refetch]);
+  }, [userId, year, fetchTimeTable]);
 
-  // useEffect(() => {
-  //   if (timetableData) {
-  //     console.log('Weekly timetable data:', timetableData);
-  //   }
-  // }, [timetableData]);
-  useEffect(() => {
-    if (timetableData) {
-      console.log('HOME Weekly timetable data:', timetableData);
-      if (isFetching) {
-        console.log('HOME Fetching data from API...');
-      } else {
-        console.log('HOME Data is from cache');
-      }
-      console.log('isStale:', isStale);
-      console.log('isPreviousData:', isPreviousData);
-    }
-  }, [timetableData, isFetching, isStale, isPreviousData]);
+  // const data = role == 'Student' ? sectionByStudent : sectionByTeacher;
+  const data =
+    role === 'Student'
+      ? sectionByStudent
+      : role === 'Parent'
+      ? sectionByParent
+      : sectionByTeacher;
 
-  const data = role == 'Student' ? sections : sectionByTeacher;
   console.log('Role:', role);
   console.log('Data:', data);
   return (
@@ -308,7 +285,7 @@ function HomeScreen({navigation}: MyProps) {
         <FlatList
           data={data}
           renderItem={({item}) =>
-            renderFlatList({item, navigation, role, timetableData})
+            renderFlatList({item, navigation, role, timeTableData})
           }
           keyExtractor={(item, index) => index.toString()}
         />
@@ -452,8 +429,26 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
         }}
       />
       <Drawer.Screen
-        name="Score"
-        component={Score}
+        name="ScoreMain"
+        component={ScoreMain}
+        options={{
+          title: 'Điểm',
+          drawerIcon: ({color, size}) => (
+            <Image
+              source={require('../assets/images/icons/Point.png')}
+              style={{width: size, height: size}}
+            />
+          ),
+        }}
+      />
+    </>
+  );
+
+  const parentScreens = (
+    <>
+      <Drawer.Screen
+        name="ScoreMain"
+        component={ScoreMain}
         options={{
           title: 'Điểm',
           drawerIcon: ({color, size}) => (
@@ -484,6 +479,7 @@ const HomeMain = ({navigation}: MyProps): React.JSX.Element => {
         }}>
         {commonScreens}
         {role === 'Student' && studentScreens}
+        {role === 'Parent' && parentScreens}
         <Drawer.Screen
           name="Logout"
           component={View}
@@ -565,6 +561,50 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+// useEffect(() => {
+//   const fetchUserRole = async () => {
+//     try {
+//       const storedRole = await AsyncStorage.getItem('userRoles');
+//       if (storedRole) {
+//         const parsedRoles = JSON.parse(storedRole);
+//         setRole(parsedRoles[0]);
+//         // console.log(parsedRoles[0]);
+//         console.log('User role:', parsedRoles[0]);
+//       } else {
+//         console.error('No user roles found in AsyncStorage');
+//       }
+//     } catch (error) {
+//       console.error('Error fetching user roles from AsyncStorage', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   fetchUserRole();
+// }, []);
+// useFocusEffect(
+//   useCallback(() => {
+//     const fetchUserRole = async () => {
+//       try {
+//         const storedRole = await AsyncStorage.getItem('userRoles');
+//         if (storedRole) {
+//           const parsedRoles = JSON.parse(storedRole);
+//           setRole(parsedRoles[0]);
+//           console.log('User role:', parsedRoles[0]); // In ra vai trò đã được đặt
+//         } else {
+//           console.error('No user roles found in AsyncStorage');
+//         }
+//       } catch (error) {
+//         console.error('Error fetching user roles from AsyncStorage', error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchUserRole();
+//     // fetchAdditionalData();
+//   }, [navigation]), // Chạy lại khi navigation thay đổi
+// );
 
 // const renderFlatList = ({item}: {item: SectionType}) => (
 //   <>
@@ -586,7 +626,7 @@ const styles = StyleSheet.create({
 //     'Xác nhận',
 //     'Bạn muốn đăng xuất phải không?',
 //     [
-//       {
+//       {a
 //         text: 'Không',
 //         onPress: () => console.log('Không'),
 //         style: 'cancel',

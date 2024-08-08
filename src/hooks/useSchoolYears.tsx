@@ -26,8 +26,8 @@ export const useSchoolYears = (): UseQueryResult<SchoolYear[], Error> => {
     // cacheTime đã bị bỏ, không cần sử dụng
     // keepPreviousData: true có thể sử dụng để giữ dữ liệu trước đó trong khi fetching mới
     refetchOnWindowFocus: false,
-    // placeholderData: keepPreviousData,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
+    // keepPreviousData: true,
   });
 };
 

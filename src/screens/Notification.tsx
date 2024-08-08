@@ -167,7 +167,7 @@ const Notification = ({navigation}: MyProps) => {
                   <View>
                     <Text style={styles.notificationTitle}>{item.title}</Text>
                     <Text style={styles.notificationsDate}>
-                      Date: {item.createAt}
+                      Ngày: {item.createAt}
                     </Text>
                   </View>
                 </View>

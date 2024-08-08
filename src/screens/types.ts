@@ -10,7 +10,7 @@ export type RootNavigationProps = {
   Profile: {user: User};
   Notification: undefined;
   NotificationDetail: undefined;
-  WeeklyTimeTableMain: undefined;
+  WeeklyTimeTableMain: {timeTableData: any};
   WeeklyTimeTableMainTeacher: undefined;
   WeeklyTimeTable: undefined;
   WeeklyTimeTableTeacher: undefined;
@@ -68,17 +68,26 @@ export interface DayDetail {
   slots: Slot[];
 }
 
+// export interface TimeTableData {
+//   success: boolean;
+//   message: string;
+//   statusCode: number;
+//   data: {
+//     schoolYear: string;
+//     class: string;
+//     mainTeacher: string;
+//     fromDate: string;
+//     toDate: string;
+//     semester: string;
+//     details: DayDetail[];
+//   };
+// }
 export interface TimeTableData {
-  success: boolean;
-  message: string;
-  statusCode: number;
-  data: {
-    schoolYear: string;
-    class: string;
-    mainTeacher: string;
-    fromDate: string;
-    toDate: string;
-    semester: string;
-    details: DayDetail[];
-  };
+  schoolYear: string;
+  class: string;
+  mainTeacher: string;
+  fromDate: string;
+  toDate: string;
+  semester: string;
+  details: DayDetail[];
 }

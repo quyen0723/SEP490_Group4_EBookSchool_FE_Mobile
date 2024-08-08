@@ -49,7 +49,7 @@ const ScoreMain = ({navigation, route}: MyProps) => {
     };
 
     fetchSchoolYears();
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -96,6 +96,16 @@ const ScoreMain = ({navigation, route}: MyProps) => {
           justifyContent: 'space-between',
           // padding: 10,
         }}></View>
+      {/* <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Image
+            style={styles.imge}
+            source={require('../assets/images/icons/Back.png')}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Chi tiết điểm</Text>
+        <View style={{flex: 1}} />
+      </View> */}
       {schoolYears.length > 0 ? (
         <Tab.Navigator
           screenOptions={{
@@ -134,6 +144,28 @@ const ScoreMain = ({navigation, route}: MyProps) => {
 export default ScoreMain;
 
 const styles = StyleSheet.create({
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginLeft: 100,
+    color: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imge: {
+    width: 27,
+    height: 27,
+    tintColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+    backgroundColor: colors.primaryColor,
+    elevation: 5,
+    paddingHorizontal: 10,
+  },
   image: {
     width: 27,
     height: 27,

@@ -31,7 +31,7 @@ import {useFetchTimeTable} from '../hooks/useFetchTimeTable';
 interface MyProps {
   navigation: StackNavigationProp<RootNavigationProps, 'WeeklyTimeTable'>;
   route: RouteProp<
-    {params: {year: string; semesterId: number; timetableData: any}},
+    {params: {year: string; semesterId: number; timeTableData: TimeTableData}},
     'params'
   >;
 }
@@ -94,7 +94,7 @@ const timeToString = (time: number): string => {
 
 const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   // const [monday, setMonday] = useState(getFormattedMondayOfWeek(new Date()));
-  const {year, timetableData: initialTimetableData} = route.params;
+  const {year, timeTableData} = route.params;
   const {currentTab} = useTab(); // Use currentTab from useTab
   const [monday, setMonday] = useState(
     getFormattedDate(getMondayOfCurrentWeek()),
@@ -105,16 +105,32 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   const [weeklyTimeTable, setWeeklyTimeTable] = useState<TimeTableData | null>(
     null,
   );
-  const [fromDatee, setFromDatee] = useState<string | null>();
-  const [toDatee, setToDatee] = useState<string | null>();
-  const [classData, setClassData] = useState<string | null>();
-  const [teacherData, setTeacherData] = useState<string | null>();
+  // const [fromDatee, setFromDatee] = useState<string | null>();
+  // const [toDatee, setToDatee] = useState<string | null>();
+  // const [classData, setClassData] = useState<string | null>();
+  // const [teacherData, setTeacherData] = useState<string | null>();
+  const [fromDatee, setFromDatee] = useState<string | null>(
+    timeTableData?.fromDate || null,
+  );
+  const [toDatee, setToDatee] = useState<string | null>(
+    timeTableData?.toDate || null,
+  );
+  const [classData, setClassData] = useState<string | null>(
+    timeTableData?.class || null,
+  );
+  const [teacherData, setTeacherData] = useState<string | null>(
+    timeTableData?.mainTeacher || null,
+  );
   const [userId, setUserId] = useState<string | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [items, setItems] = useState<Items>({});
   const [currentMonth, setCurrentMonth] = useState(getMondayOfCurrentWeek());
+  const [cachedWeeks, setCachedWeeks] = useState<{
+    [key: string]: TimeTableData;
+  }>({});
   const queryClient = useQueryClient();
   const [shouldRenderAgenda, setShouldRenderAgenda] = useState(false);
+  const [shouldFetch, setShouldFetch] = useState(false);
   const agendaRef = useRef(null);
   // const [items, setItems] = useState<Items>({});
   // const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -174,7 +190,7 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   //           setItems(emptyItems);
   //         } else {
   //           const timeTableData = JSON.parse(textResponse);
-  //           console.log('Time table data:', timeTableData);
+  //           console.log('Time table data TRƯỚC KHI MAP:', timeTableData);
 
   //           if (timeTableData) {
   //             const processedItems = processTimeTableData(timeTableData, roles);
@@ -184,6 +200,7 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   //             setToDatee(timeTableData.toDate);
   //             setClassData(timeTableData.class);
   //             setTeacherData(timeTableData.mainTeacher);
+  //             setShouldRenderAgenda(true);
   //           } else {
   //             console.error('Received empty timetable data');
   //           }
@@ -233,55 +250,69 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   //   refetch,
   // } = useFetchTimeTable(userId!, year, monday);
 
-  const {
-    data: timetableData,
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-    isStale,
-  } = useFetchTimeTable(userId!, year, monday);
+  // const {
+  //   data: timetableData,
+  //   isLoading,
+  //   error,
+  //   refetch,
+  //   isFetching,
+  //   isStale,
+  // } = useFetchTimeTable(userId!, year, monday);
 
-  useFocusEffect(
-    useCallback(() => {
-      const fetchUserIdAndRoles = async () => {
-        try {
-          const storedUserId = await AsyncStorage.getItem('userId');
-          const roles = JSON.parse(
-            (await AsyncStorage.getItem('userRoles')) || '[]',
-          );
-          if (storedUserId) {
-            setUserId(storedUserId);
-            setUserRoles(roles);
-            console.log('User ID and roles fetched:', storedUserId, roles);
-          } else {
-            console.error('No user ID found in AsyncStorage');
-          }
-        } catch (error) {
-          console.error(
-            'Error fetching user ID or roles from AsyncStorage',
-            error,
-          );
-        }
-      };
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchUserIdAndRoles = async () => {
+  //       try {
+  //         const storedUserId = await AsyncStorage.getItem('userId');
+  //         const roles = JSON.parse(
+  //           (await AsyncStorage.getItem('userRoles')) || '[]',
+  //         );
+  //         if (storedUserId) {
+  //           setUserId(storedUserId);
+  //           setUserRoles(roles);
+  //           console.log('User ID and roles fetched:', storedUserId, roles);
+  //         } else {
+  //           console.error('No user ID found in AsyncStorage');
+  //         }
+  //       } catch (error) {
+  //         console.error(
+  //           'Error fetching user ID or roles from AsyncStorage',
+  //           error,
+  //         );
+  //       }
+  //     };
 
-      fetchUserIdAndRoles();
-    }, []),
-  );
+  //     fetchUserIdAndRoles();
+  //   }, []),
+  // );
 
-  useEffect(() => {
-    // Make sure userId is not null before fetching the timetable
-    if (userId !== null) {
-      refetch();
-    }
-  }, [userId, refetch]);
+  // useEffect(() => {
+  //   // Make sure userId is not null before fetching the timetable
+  //   if (userId !== null) {
+  //     refetch();
+  //   }
+  // }, [userId, refetch]);
 
-  useEffect(() => {
-    if (currentTab === year) {
-      console.log('Refetching data for year:', year);
-      refetch();
-    }
-  }, [refetch, currentTab, year]);
+  // useEffect(() => {
+  //   if (currentTab === year) {
+  //     console.log('Refetching data for year:', year);
+  //     refetch();
+  //   }
+  // }, [refetch, currentTab, year]);
+  // useEffect(() => {
+  //   if (userId && currentTab === year) {
+  //     console.log('Refetching data for year:', year);
+  //     refetch();
+  //     console.log('userId && currentTab === year');
+  //   }
+  // }, [userId, currentTab, year, refetch]);
+
+  // useEffect(() => {
+  //   if (userId !== null && !isFetching && !timetableData) {
+  //     refetch();
+  //     console.log('userId !== null && !isFetching && !timetableData');
+  //   }
+  // }, [userId, timetableData, isFetching, refetch]);
 
   // useFocusEffect(
   //   useCallback(() => {
@@ -292,51 +323,51 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   //   }, [refetch, currentTab, year]),
   // );
 
-  useEffect(() => {
-    console.log(
-      'Fetching status:',
-      isFetching ? 'Fetching from API...' : 'Data from cache',
-    );
-    console.log('isStale:', isStale);
-    console.log('KKKKKK', timetableData);
-    if (timetableData) {
-      if (timetableData.message === 'Không tìm thấy lớp học') {
-        const emptyItems: Items = {};
-        const fromDate = new Date(monday.split('/').reverse().join('-'));
-        const toDate = new Date(fromDate);
-        toDate.setDate(fromDate.getDate() + 6);
-        for (
-          let date = fromDate;
-          date <= toDate;
-          date.setDate(date.getDate() + 1)
-        ) {
-          const strTime = timeToString(date.getTime());
-          emptyItems[strTime] = [
-            {
-              name: 'Không tìm thấy lớp học',
-              slotTime: '',
-              teacherOrClassroom: '',
-              slot: '',
-              status: '',
-            },
-          ];
-        }
-        setItems(emptyItems);
-      } else {
-        const processedItems = processTimeTableData(
-          timetableData.data,
-          userRoles,
-        );
-        setItems(processedItems);
-        setFromDatee(timetableData.data.fromDate);
-        setToDatee(timetableData.data.toDate);
-        setClassData(timetableData.data.class);
-        setTeacherData(timetableData.data.mainTeacher);
-        setShouldRenderAgenda(true);
-        console.log('Processed Items:', processedItems);
-      }
-    }
-  }, [timetableData, userRoles]);
+  // useEffect(() => {
+  //   // console.log(
+  //   //   'Fetching status:',
+  //   //   isFetching ? 'Fetching from API...' : 'Data from cache',
+  //   // );
+  //   // console.log('isStale:', isStale);
+  //   console.log('KKKKKK', timetableData);
+  //   if (timetableData) {
+  //     if (timetableData.message === 'Không tìm thấy lớp học') {
+  //       const emptyItems: Items = {};
+  //       const fromDate = new Date(monday.split('/').reverse().join('-'));
+  //       const toDate = new Date(fromDate);
+  //       toDate.setDate(fromDate.getDate() + 6);
+  //       for (
+  //         let date = fromDate;
+  //         date <= toDate;
+  //         date.setDate(date.getDate() + 1)
+  //       ) {
+  //         const strTime = timeToString(date.getTime());
+  //         emptyItems[strTime] = [
+  //           {
+  //             name: 'Không tìm thấy lớp học',
+  //             slotTime: '',
+  //             teacherOrClassroom: '',
+  //             slot: '',
+  //             status: '',
+  //           },
+  //         ];
+  //       }
+  //       setItems(emptyItems);
+  //     } else {
+  //       const processedItems = processTimeTableData(
+  //         timetableData.data,
+  //         userRoles,
+  //       );
+  //       setItems(processedItems);
+  //       setFromDatee(timetableData.data.fromDate);
+  //       setToDatee(timetableData.data.toDate);
+  //       setClassData(timetableData.data.class);
+  //       setTeacherData(timetableData.data.mainTeacher);
+  //       setShouldRenderAgenda(true);
+  //       console.log('Processed Items:', processedItems);
+  //     }
+  //   }
+  // }, [timetableData, userRoles]);
 
   // useEffect(() => {
   //   navigation.setOptions({
@@ -353,15 +384,15 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
   // }, [navigation]);
 
   const processTimeTableData = useCallback(
-    (timeTableData: TimeTableData['data'], roles: string[]): Items => {
+    (timeTableData: TimeTableData['details'], roles: string[]): Items => {
       const newItems: Items = {};
       const isTeacherOrAdmin =
         roles.includes('Subject Teacher') ||
         roles.includes('Admin') ||
         roles.includes('HomeroomTeacher');
 
-      if (timeTableData.details) {
-        timeTableData.details.forEach(detail => {
+      if (timeTableData) {
+        timeTableData.forEach(detail => {
           const date = convertDateFormat(detail.date);
           const filteredSlots = detail.slots.filter(
             slot =>
@@ -399,10 +430,162 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     [],
   );
 
+  const fetchTimeTable = useCallback(
+    async (userId: string, monday: string) => {
+      try {
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        const roles = JSON.parse(
+          (await AsyncStorage.getItem('userRoles')) || '[]',
+        );
+        let url = '';
+
+        if (roles.includes('Student') || roles.includes('Parent')) {
+          url = `https://orbapi.click/api/Schedules/Student?studentID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+        } else if (
+          roles.includes('Subject Teacher') ||
+          roles.includes('Admin')
+        ) {
+          url = `https://orbapi.click/api/Schedules/SubjectTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+        } else if (roles.includes('HomeroomTeacher')) {
+          url = `https://orbapi.click/api/Schedules/HomeroomTeacher?teacherID=${userId}&schoolYear=${year}&fromDate=${monday}`;
+        }
+
+        if (url) {
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+          const textResponse = await response.text();
+
+          if (textResponse === 'Không tìm thấy lớp học') {
+            const emptyItems: Items = {};
+            const fromDate = new Date(monday.split('/').reverse().join('-'));
+            const toDate = new Date(fromDate);
+            toDate.setDate(fromDate.getDate() + 6);
+
+            for (
+              let date = fromDate;
+              date <= toDate;
+              date.setDate(date.getDate() + 1)
+            ) {
+              const strTime = timeToString(date.getTime());
+              emptyItems[strTime] = [
+                {
+                  name: 'Không tìm thấy lớp học',
+                  slotTime: '',
+                  teacherOrClassroom: '',
+                  slot: '',
+                  status: '',
+                },
+              ];
+            }
+            setItems(emptyItems);
+          } else {
+            const fetchedTimeTableData = JSON.parse(textResponse);
+
+            if (fetchedTimeTableData) {
+              const processedItems = processTimeTableData(
+                fetchedTimeTableData.details,
+                roles,
+              );
+              setWeeklyTimeTable(fetchedTimeTableData);
+              setItems(prevItems => ({...prevItems, ...processedItems}));
+              setFromDatee(fetchedTimeTableData.fromDate);
+              setToDatee(fetchedTimeTableData.toDate);
+              setClassData(fetchedTimeTableData.class);
+              setTeacherData(fetchedTimeTableData.mainTeacher);
+              // setShouldRenderAgenda(true);
+
+              // Cache fetched data
+              setCachedWeeks(prev => ({
+                ...prev,
+                [monday]: fetchedTimeTableData,
+              }));
+            } else {
+              console.error('Received empty timetable data');
+            }
+          }
+        } else {
+          console.error('No valid role found for fetching timetable');
+        }
+      } catch (error) {
+        console.error('Error fetching timetable data', error);
+      }
+    },
+    [year], // dependency array
+  );
+
+  useEffect(() => {
+    const fetchAdjacentWeeksData = async (currentMonday: string) => {
+      if (userId) {
+        const currentDate = new Date(
+          currentMonday.split('/').reverse().join('-'),
+        );
+
+        const prevMonday = getFormattedDate(
+          new Date(currentDate.setDate(currentDate.getDate() - 7)),
+        );
+        const nextMonday = getFormattedDate(
+          new Date(currentDate.setDate(currentDate.getDate() + 14)),
+        );
+
+        // Fetch previous week data if not cached
+        if (!cachedWeeks[prevMonday]) {
+          fetchTimeTable(userId, prevMonday);
+        }
+
+        // Fetch next week data if not cached
+        if (!cachedWeeks[nextMonday]) {
+          fetchTimeTable(userId, nextMonday);
+        }
+      }
+    };
+
+    if (shouldRenderAgenda) {
+      fetchAdjacentWeeksData(monday);
+    }
+  }, [monday, shouldRenderAgenda, userId, cachedWeeks, fetchTimeTable]);
+
+  useEffect(() => {
+    const fetchUserIdAndRoles = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        const roles = JSON.parse(
+          (await AsyncStorage.getItem('userRoles')) || '[]',
+        );
+        if (storedUserId) {
+          setUserId(storedUserId);
+          setUserRoles(roles);
+          if (!timeTableData) {
+            fetchTimeTable(storedUserId, monday);
+          } else {
+            const processedItems = processTimeTableData(
+              timeTableData.details,
+              roles,
+            );
+            setItems(prevItems => ({...prevItems, ...processedItems}));
+            setWeeklyTimeTable(timeTableData);
+            setShouldRenderAgenda(true);
+          }
+        }
+      } catch (error) {
+        console.error(
+          'Error fetching user ID or roles from AsyncStorage',
+          error,
+        );
+      }
+    };
+
+    fetchUserIdAndRoles();
+  }, [fetchTimeTable, timeTableData, monday]);
+
   // const fromDate = studentWeeklyTimeTableDates.data.fromDate;
   // const toDate = studentWeeklyTimeTableDates.data.toDate;
   const convertDateFormat = (dateString: string): string => {
     const [day, month, year] = dateString.split('/');
+    const newDateString = `${year}-${month}-${day}`;
+    console.log('Converted date:', newDateString);
     return `${year}-${month}-${day}`;
   };
 
@@ -410,21 +593,28 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     (day: any) => {
       setTimeout(() => {
         const newItems: Items = {...items};
-        if (fromDatee && toDatee && weeklyTimeTable && weeklyTimeTable.data) {
+        if (
+          fromDatee &&
+          toDatee &&
+          weeklyTimeTable &&
+          weeklyTimeTable.details
+        ) {
           const fromDate = new Date(convertDateFormat(fromDatee));
           const toDate = new Date(convertDateFormat(toDatee));
-
+          console.log('SAU KHI MAP', fromDate);
           for (
             let date = new Date(fromDate);
             date <= toDate;
             date.setDate(date.getDate() + 1)
           ) {
             const strTime = timeToString(date.getTime());
+            console.log('SAU KHI MAP', fromDate);
             if (!newItems[strTime]) {
               newItems[strTime] = [];
-              const dayDetail = weeklyTimeTable.data.details.find(
+              const dayDetail = weeklyTimeTable.details.find(
                 detail => convertDateFormat(detail.date) === strTime,
               );
+
               if (dayDetail) {
                 const numberOfSlotsWithData = dayDetail.slots.filter(
                   slot => slot.subject !== '' && slot.teacher !== '',
@@ -475,57 +665,68 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     [fromDatee, toDatee, weeklyTimeTable, items, convertDateFormat, userRoles],
   );
 
-  const getSlotsForDay = (date: Date): any[] | null => {
-    const dayOfWeek = date.getDay();
-    const weekDate = getWeekDayName(dayOfWeek);
-    if (weekDate !== '') {
-      const dayDetails = weeklyTimeTable?.data.details.find(
-        detail => detail.weekDate === weekDate,
-      );
+  // const getSlotsForDay = (date: Date): any[] | null => {
+  //   const dayOfWeek = date.getDay();
+  //   const weekDate = getWeekDayName(dayOfWeek);
+  //   if (weekDate !== '') {
+  //     const dayDetails = weeklyTimeTable?.data.details.find(
+  //       detail => detail.weekDate === weekDate,
+  //     );
 
-      if (dayDetails) {
-        return dayDetails.slots;
-      }
-    }
-    return null;
-  };
+  //     if (dayDetails) {
+  //       return dayDetails.slots;
+  //     }
+  //   }
+  //   return null;
+  // };
 
-  const vietnameseDayToNumberMapping: {[key: string]: number} = {
-    'Chủ Nhật': 0,
-    'Thứ Hai': 1,
-    'Thứ Ba': 2,
-    'Thứ Tư': 3,
-    'Thứ Năm': 4,
-    'Thứ Sáu': 5,
-    'Thứ Bảy': 6,
-  };
+  // const vietnameseDayToNumberMapping: {[key: string]: number} = {
+  //   'Chủ Nhật': 0,
+  //   'Thứ Hai': 1,
+  //   'Thứ Ba': 2,
+  //   'Thứ Tư': 3,
+  //   'Thứ Năm': 4,
+  //   'Thứ Sáu': 5,
+  //   'Thứ Bảy': 6,
+  // };
 
-  const vietnameseDayToEnglishDayMapping: {[key: string]: string} = {
-    'Chủ Nhật': 'Sun',
-    'Thứ Hai': 'Mon',
-    'Thứ Ba': 'Tue',
-    'Thứ Tư': 'Wed',
-    'Thứ Năm': 'Thu',
-    'Thứ Sáu': 'Fri',
-    'Thứ Bảy': 'Sat',
-  };
+  // const vietnameseDayToEnglishDayMapping: {[key: string]: string} = {
+  //   'Chủ Nhật': 'Sun',
+  //   'Thứ Hai': 'Mon',
+  //   'Thứ Ba': 'Tue',
+  //   'Thứ Tư': 'Wed',
+  //   'Thứ Năm': 'Thu',
+  //   'Thứ Sáu': 'Fri',
+  //   'Thứ Bảy': 'Sat',
+  // };
 
-  const vietnameseDayToNumber = (dayText: string): number | undefined => {
-    return vietnameseDayToNumberMapping[dayText];
-  };
+  // const vietnameseDayToNumber = (dayText: string): number | undefined => {
+  //   return vietnameseDayToNumberMapping[dayText];
+  // };
 
-  const getWeekDayName = (dayIndex: number): string => {
-    const vietnameseDay = Object.keys(vietnameseDayToNumberMapping).find(
-      key => vietnameseDayToNumberMapping[key] === dayIndex,
-    );
-    if (vietnameseDay) {
-      return vietnameseDayToEnglishDayMapping[vietnameseDay];
-    }
-    return '';
-  };
+  // const getWeekDayName = (dayIndex: number): string => {
+  //   const vietnameseDay = Object.keys(vietnameseDayToNumberMapping).find(
+  //     key => vietnameseDayToNumberMapping[key] === dayIndex,
+  //   );
+  //   if (vietnameseDay) {
+  //     return vietnameseDayToEnglishDayMapping[vietnameseDay];
+  //   }
+  //   return '';
+  // };
   // const CustomCol: React.FC<CustomColProps> = ({widthArr, ...rest}) => {
   //   return <Col {...rest} />;
   // };
+
+  // useEffect(() => {
+  //   const fetchInitialData = async () => {
+  //     if (userId && monday) {
+  //       fetchTimeTable(userId, monday); // Fetch initial data when component mounts
+  //     }
+  //   };
+
+  //   fetchInitialData();
+  // }, [userId, monday, fetchTimeTable]);
+
   const handleWeekChange = useCallback(
     (direction: 'prev' | 'next') => {
       const newMonth = new Date(currentMonth);
@@ -543,8 +744,36 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
       setMonday(getFormattedDate(currentMonday));
       setSelectedDate(timeToString(currentMonday.getTime()));
       setItems({});
+
+      const newMondayFormatted = getFormattedDate(currentMonday);
+
+      if (userId) {
+        if (cachedWeeks[newMondayFormatted]) {
+          const fetchedTimeTableData = cachedWeeks[newMondayFormatted];
+          const processedItems = processTimeTableData(
+            fetchedTimeTableData.details,
+            userRoles,
+          );
+          setWeeklyTimeTable(fetchedTimeTableData);
+          setItems(processedItems);
+          setFromDatee(fetchedTimeTableData.fromDate);
+          setToDatee(fetchedTimeTableData.toDate);
+          setClassData(fetchedTimeTableData.class);
+          setTeacherData(fetchedTimeTableData.mainTeacher);
+        } else {
+          fetchTimeTable(userId, newMondayFormatted);
+        }
+      }
     },
-    [currentMonth, monday],
+    [
+      currentMonth,
+      monday,
+      userId,
+      fetchTimeTable,
+      cachedWeeks,
+      userRoles,
+      processTimeTableData,
+    ],
   );
 
   const handleDayPress = useCallback(
@@ -561,9 +790,36 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
         setMonday(getFormattedDate(mondayOfSelectedDate));
         setSelectedDate(timeToString(mondayOfSelectedDate.getTime()));
         setItems({});
+        if (userId) {
+          const newMondayFormatted = getFormattedDate(mondayOfSelectedDate);
+          if (cachedWeeks[newMondayFormatted]) {
+            const fetchedTimeTableData = cachedWeeks[newMondayFormatted];
+            const processedItems = processTimeTableData(
+              fetchedTimeTableData.details,
+              userRoles,
+            );
+            setWeeklyTimeTable(fetchedTimeTableData);
+            setItems(processedItems);
+            setFromDatee(fetchedTimeTableData.fromDate);
+            setToDatee(fetchedTimeTableData.toDate);
+            setClassData(fetchedTimeTableData.class);
+            setTeacherData(fetchedTimeTableData.mainTeacher);
+          } else {
+            fetchTimeTable(userId, newMondayFormatted);
+          }
+        }
+      } else {
+        setSelectedDate(timeToString(selectedDate.getTime()));
       }
     },
-    [currentMonth],
+    [
+      currentMonth,
+      userId,
+      fetchTimeTable,
+      cachedWeeks,
+      processTimeTableData,
+      userRoles,
+    ],
   );
 
   const renderItem = useCallback(
@@ -790,7 +1046,9 @@ const WeeklyTimeTable: React.FC<MyProps> = ({navigation, route}) => {
     <View style={{flex: 1}}>
       <View style={styles.textCenter}>
         <Text style={styles.textSemester}>
-          {userRoles.includes('Student') ? classData : teacherData}
+          {userRoles.includes('Student') || userRoles.includes('Parent')
+            ? classData
+            : teacherData}
         </Text>
       </View>
 

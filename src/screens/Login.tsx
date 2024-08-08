@@ -124,7 +124,11 @@ const Login = ({navigation}: MyProps) => {
           'permissions',
           JSON.stringify(data.permissions),
         );
-        await AsyncStorage.setItem('userId', data.user.id);
+        let userIdToStore = data.user.id;
+        if (data.roles.includes('Parent')) {
+          userIdToStore = userIdToStore.substring(2);
+        }
+        await AsyncStorage.setItem('userId', userIdToStore);
         await AsyncStorage.setItem('userRoles', JSON.stringify(data.roles));
         if (data.roles.length > 1) {
           const roles = [...data.roles];

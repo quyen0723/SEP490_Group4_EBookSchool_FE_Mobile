@@ -165,7 +165,7 @@ import {useFocusEffect} from '@react-navigation/native';
 const Tab = createMaterialTopTabNavigator();
 
 interface MyProps {
-  navigation: StackNavigationProp<RootNavigationProps, 'ScoreMain'>;
+  navigation: StackNavigationProp<RootNavigationProps, 'Attendance'>;
   route: any;
 }
 
@@ -187,7 +187,7 @@ const Attendance = ({navigation}: MyProps) => {
             setSchoolYears(JSON.parse(schoolYearsString));
             setUserRoles(JSON.parse(rolesString));
           } else {
-            Alert.alert('Error', 'No school years or roles data found');
+            // Alert.alert('Error', 'No school years or roles data found');
           }
         } catch (error) {
           console.error('Error fetching school years or roles', error);
@@ -215,7 +215,8 @@ const Attendance = ({navigation}: MyProps) => {
   }, [navigation]);
 
   const renderTabs = () => {
-    const isStudent = userRoles.includes('Student');
+    const isStudent =
+      userRoles.includes('Student') || userRoles.includes('Parent');
     return schoolYears.map((year, index) => (
       <Tab.Screen
         key={index}

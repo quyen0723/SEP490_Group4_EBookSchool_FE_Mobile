@@ -71,7 +71,9 @@ const App = () => {
 
         {/* <DropdownComponent /> */}
         {/* <ExampleTable /> */}
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </View>
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 };

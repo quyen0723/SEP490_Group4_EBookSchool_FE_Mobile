@@ -30,14 +30,15 @@ const Stack = createStackNavigator<RootNavigationProps>();
 
 const CustomHeader = ({navigation, route, title}) => (
   <View style={styles.header}>
-    <TouchableOpacity onPress={() => navigation.goBack()}>
+    <TouchableOpacity
+      style={styles.backButton}
+      onPress={() => navigation.goBack()}>
       <Image
         style={styles.image}
         source={require('../assets/images/icons/Back.png')}
       />
     </TouchableOpacity>
     <Text style={styles.headerTitle}>{title || route.name}</Text>
-    <View style={{flex: 1}} />
   </View>
 );
 
@@ -58,8 +59,8 @@ const screenOptions = ({navigation, route}) => ({
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    textAlign: 'center',
   },
+  headerTitleAlign: 'center',
   headerTintColor: '#FFFFFF',
 });
 
@@ -117,7 +118,7 @@ const AppNavigator = ({initialRouteName}: {initialRouteName: string}) => {
         <Stack.Screen
           name="ScoreMain"
           component={ScoreMain} // Add the Profile component as a screen
-          options={{headerShown: false}}
+          options={{headerShown: true, title: 'Điểm'}}
         />
         <Stack.Screen
           name="Calculate"
@@ -164,10 +165,15 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginLeft: 120,
     color: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
+    textAlign: 'center',
+    // position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 10,
   },
   image: {
     width: 27,

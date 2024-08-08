@@ -3,7 +3,7 @@ import {View, Text, Image, StyleSheet, ActivityIndicator} from 'react-native';
 import {User} from './types';
 import {colors} from '../assets/css/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useRoute} from '@react-navigation/native';
 
 const Profile = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -12,61 +12,6 @@ const Profile = () => {
   const [error, setError] = useState<string | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     setLoading(true);
-  //     try {
-  //       // Lấy userId và userRoles từ AsyncStorage
-  //       const storedUserId = await AsyncStorage.getItem('userId');
-  //       const roles = JSON.parse(
-  //         (await AsyncStorage.getItem('userRoles')) || '[]',
-  //       );
-
-  //       if (storedUserId) {
-  //         setUserId(storedUserId);
-  //         setUserRoles(roles);
-
-  //         // Xác định URL API dựa trên vai trò của người dùng
-  //         const isStudent = roles.includes('Student');
-  //         const apiUrl = isStudent
-  //           ? `https://orbapi.click/api/Students/${storedUserId}`
-  //           : `https://orbapi.click/api/Teachers/${storedUserId}`;
-
-  //         const accessToken = await AsyncStorage.getItem('accessToken');
-  //         console.log('Fetching user from API:', apiUrl);
-  //         console.log('Using access token:', accessToken);
-  //         console.log('User ID:', storedUserId);
-  //         console.log('Roles:', roles);
-
-  //         const res = await fetch(apiUrl, {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //           },
-  //         });
-
-  //         if (!res.ok) {
-  //           throw new Error(`Error: ${res.status} ${res.statusText}`);
-  //         }
-
-  //         const data = await res.json();
-  //         if (data) {
-  //           setUser(data);
-  //         } else {
-  //           setError(data.message);
-  //         }
-  //       } else {
-  //         console.error('No user ID found in AsyncStorage');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching user data:', error);
-  //       setError('An error occurred while fetching user data');
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchUserData();
-  // }, [userId]);
   const fetchUserData = async () => {
     setLoading(true);
     try {
@@ -74,33 +19,39 @@ const Profile = () => {
       const roles = JSON.parse(
         (await AsyncStorage.getItem('userRoles')) || '[]',
       );
-
+      console.log('Stored User ID:', storedUserId);
+      console.log('User Roles:', roles);
       if (storedUserId) {
         setUserId(storedUserId);
         setUserRoles(roles);
 
-        const isStudent = roles.includes('Student');
+        const isStudent = roles.includes('Student') || roles.includes('Parent');
         const apiUrl = isStudent
           ? `https://orbapi.click/api/Students/${storedUserId}`
           : `https://orbapi.click/api/Teachers/${storedUserId}`;
 
+        console.log('API URL:', apiUrl);
+
         const accessToken = await AsyncStorage.getItem('accessToken');
+        console.log('Access Token:', accessToken);
+
         const res = await fetch(apiUrl, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
 
+        console.log('API Response Status:', res.status);
+        console.log('API Response Status Text:', res.statusText);
+
         if (!res.ok) {
           throw new Error(`Error: ${res.status} ${res.statusText}`);
         }
 
         const data = await res.json();
-        if (data) {
-          setUser(data);
-        } else {
-          setError(data.message);
-        }
+        console.log('API Response Data:', data);
+        setUser(data); // Cập nhật state user đúng cách
+        setError(null); // Reset error nếu có dữ liệu thành công
       } else {
         console.error('No user ID found in AsyncStorage');
       }
@@ -142,8 +93,14 @@ const Profile = () => {
     );
   }
 
-  const getUserStatus = (id: string) => {
-    return id.startsWith('HS') ? 'Học sinh' : 'Giáo viên';
+  const getUserStatus = () => {
+    if (userRoles.includes('Student')) {
+      return 'Học sinh';
+    } else if (userRoles.includes('Parent')) {
+      return 'Phụ huynh';
+    } else {
+      return 'Giáo viên';
+    }
   };
 
   return (
@@ -305,3 +262,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+// useEffect(() => {
+//   const fetchUserData = async () => {
+//     setLoading(true);
+//     try {
+//       // Lấy userId và userRoles từ AsyncStorage
+//       const storedUserId = await AsyncStorage.getItem('userId');
+//       const roles = JSON.parse(
+//         (await AsyncStorage.getItem('userRoles')) || '[]',
+//       );
+
+//       if (storedUserId) {
+//         setUserId(storedUserId);
+//         setUserRoles(roles);
+
+//         // Xác định URL API dựa trên vai trò của người dùng
+//         const isStudent = roles.includes('Student');
+//         const apiUrl = isStudent
+//           ? `https://orbapi.click/api/Students/${storedUserId}`
+//           : `https://orbapi.click/api/Teachers/${storedUserId}`;
+
+//         const accessToken = await AsyncStorage.getItem('accessToken');
+//         console.log('Fetching user from API:', apiUrl);
+//         console.log('Using access token:', accessToken);
+//         console.log('User ID:', storedUserId);
+//         console.log('Roles:', roles);
+
+//         const res = await fetch(apiUrl, {
+//           headers: {
+//             Authorization: `Bearer ${accessToken}`,
+//           },
+//         });
+
+//         if (!res.ok) {
+//           throw new Error(`Error: ${res.status} ${res.statusText}`);
+//         }
+
+//         const data = await res.json();
+//         if (data) {
+//           setUser(data);
+//         } else {
+//           setError(data.message);
+//         }
+//       } else {
+//         console.error('No user ID found in AsyncStorage');
+//       }
+//     } catch (error) {
+//       console.error('Error fetching user data:', error);
+//       setError('An error occurred while fetching user data');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   fetchUserData();
+// }, [userId]);

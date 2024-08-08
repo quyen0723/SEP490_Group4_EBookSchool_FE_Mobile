@@ -62,6 +62,7 @@ export const useFetchTimeTable = (
   year: string,
   monday: string,
 ): UseQueryResult<any, Error> => {
+  console.dir(['timetable', userId, year, monday]);
   return useQuery({
     queryKey: ['timetable', userId, year, monday],
     queryFn: fetchTimeTable,
@@ -69,7 +70,6 @@ export const useFetchTimeTable = (
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60,
-    cacheTime: 1000 * 60 * 60 * 24 * 7, // 7 days
-    keepPreviousData: true,
+    // cacheTime: 1000 * 60 * 60 * 24 * 7, // 7 days
   });
 };
