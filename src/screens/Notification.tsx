@@ -36,10 +36,6 @@ const Notification = ({navigation}: MyProps) => {
   const [keyword, setKeyword] = useState<string>('');
   const isFocused = useIsFocused();
   const [data, setData] = useState<ItemType[]>([]);
-  // const filterItemName = () => {
-  //   setData(data.filter(item => item.title.includes(keyword.toLowerCase())));
-  // };
-
   useEffect(() => {
     getNotes();
   }, [isFocused]);
