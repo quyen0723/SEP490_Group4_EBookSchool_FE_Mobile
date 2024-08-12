@@ -82,7 +82,7 @@ const Profile = ({navigation}: MyProps) => {
   );
   useEffect(() => {
     navigation.setOptions({
-      title: 'Thông báo',
+      title: 'Thông tin cá nhân',
       headerLeft: () => (
         // <Button onPress={() => navigation.goBack()} title="Go Back" />
         <TouchableOpacity onPress={() => navigation.goBack()}>

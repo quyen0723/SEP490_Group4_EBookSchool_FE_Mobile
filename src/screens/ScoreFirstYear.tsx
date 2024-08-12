@@ -39,53 +39,52 @@ const ScoreFirstYear = ({navigation, route}: MyProps) => {
         console.error('Error fetching user ID from AsyncStorage', error);
       }
     };
+    const fetchScores = async (userId: string) => {
+      setLoading(true);
+      try {
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        const response = await fetch(
+          `https://orbapi.click/api/Scores/AVGByStudentAllSubject?schoolYear=${year}&studentID=${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const text = await response.text();
+        if (!text) {
+          throw new Error('API response is empty');
+        }
+
+        const data: SubjectData[] = JSON.parse(text);
+        // console.log('Fetched data:', data);
+
+        if (!Array.isArray(data)) {
+          throw new Error('API response is not an array');
+        }
+
+        const filteredData = data.filter(
+          subjectData =>
+            parseFloat(subjectData.semester1Average) !== -1 ||
+            parseFloat(subjectData.semester2Average) !== -1 ||
+            parseFloat(subjectData.yearAverage) !== -1,
+        );
+
+        setSubjects(filteredData);
+      } catch (error) {
+        console.error('Error fetching scores data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchUserId();
-  }, [year]);
-
-  const fetchScores = async (userId: string) => {
-    setLoading(true);
-    try {
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      const response = await fetch(
-        `https://orbapi.click/api/Scores/AVGByStudentAllSubject?schoolYear=${year}&studentID=${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const text = await response.text();
-      if (!text) {
-        throw new Error('API response is empty');
-      }
-
-      const data: SubjectData[] = JSON.parse(text);
-      // console.log('Fetched data:', data);
-
-      if (!Array.isArray(data)) {
-        throw new Error('API response is not an array');
-      }
-
-      const filteredData = data.filter(
-        subjectData =>
-          parseFloat(subjectData.semester1Average) !== -1 ||
-          parseFloat(subjectData.semester2Average) !== -1 ||
-          parseFloat(subjectData.yearAverage) !== -1,
-      );
-
-      setSubjects(filteredData);
-    } catch (error) {
-      console.error('Error fetching scores data', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [year, userId]);
 
   const handleSubjectPress = (subject: string) => {
     navigation.navigate('DetailScoreFirstYearOne', {year, subject});

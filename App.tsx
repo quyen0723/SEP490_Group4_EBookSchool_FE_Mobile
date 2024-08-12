@@ -11,7 +11,7 @@ import type {PropsWithChildren} from 'react';
 import {ActivityIndicator, View} from 'react-native';
 
 import AppNavigator from './src/navigations/AppNavigator';
-import ExampleTable from './src/screens/ExampleTable';
+import ExampleTable from './src/components/ExampleTable';
 import DropdownComponent from './src/components/DropdownComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';

@@ -118,7 +118,7 @@ const DetailAttendanceFirst = ({navigation, route}: MyProps) => {
         }
         setStudentAttendances(data);
       } catch (error) {
-        console.error('Error fetching scores data', error);
+        console.log('Error fetching scores data', error);
       } finally {
         setLoading(false);
       }

@@ -156,6 +156,12 @@ const Calculate = ({navigation, route}: CalculateProps) => {
       }));
     }
   };
+  const roundGPA = (gpa: number) => {
+    const integerPart = Math.floor(gpa);
+    const decimalPart = gpa - integerPart;
+    const roundedDecimalPart = Math.round(decimalPart * 10) / 10; // Làm tròn đến 1 chữ số thập phân
+    return integerPart + roundedDecimalPart;
+  };
 
   const calculateGPA = () => {
     let totalScoreSemester1 = 0;
@@ -230,18 +236,18 @@ const Calculate = ({navigation, route}: CalculateProps) => {
 
     if (!gpaSemester1 || !gpaSemester2) {
       return {
-        gpaSemester1: gpaSemester1.toFixed(2),
-        gpaSemester2: gpaSemester2.toFixed(2),
+        gpaSemester1: roundGPA(gpaSemester1).toFixed(2),
+        gpaSemester2: roundGPA(gpaSemester2).toFixed(2),
         gpaYear: '0.00',
       };
     }
 
-    const gpaYear = (gpaSemester1 + gpaSemester2) / 2;
+    const gpaYear = (gpaSemester1 + gpaSemester2 * 2) / 3;
 
     return {
-      gpaSemester1: gpaSemester1.toFixed(2),
-      gpaSemester2: gpaSemester2.toFixed(2),
-      gpaYear: gpaYear.toFixed(2),
+      gpaSemester1: roundGPA(gpaSemester1).toFixed(2),
+      gpaSemester2: roundGPA(gpaSemester2).toFixed(2),
+      gpaYear: roundGPA(gpaYear).toFixed(2),
     };
   };
 
